@@ -25,25 +25,27 @@ def handle_event(data):
 
     project_name = project['name']
     project_file_name = slugify(project_name, separator="_")
+    svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
 
     data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
     with open(data_dir) as file:
-        data = json.load(file)
-
-    old_project_file_name = data[project_id]['project_file_name']
-
+        genesys_data = json.load(file)
 
     try:
+        old_project_file_name = genesys_data[project_id]['file_name']
         if old_project_file_name != project_file_name:
             payload = {
                 'old_project_name':old_project_file_name,
                 'new_project_name':project_file_name
                 }
-            project_name = data['name']
             # requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_name}", json=payload)
 
-            data[project_id]['project_file_name'] = project_file_name
+            genesys_data[project_id]['file_name'] = project_file_name
+            genesys_data[project_id]['svn_url'] = svn_url
             with open(data_dir, 'w') as file:
-                json.dump(data, file)
+                json.dump(genesys_data, file)
+            
+            print(genesys_data)
     except KeyError:
-        pass
+        print(genesys_data)
+        print("Project not found in genesys")

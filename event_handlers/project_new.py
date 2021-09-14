@@ -49,8 +49,10 @@ def handle_event(data):
     print(projects_service.get_project(project_id))
     data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
     with open(data_dir, 'r') as f:
-        data = json.load(f)
-    data[project_id] = {'file_map': FILE_MAP, 'svn_url': svn_url, 'file_name': project_file_name, 'closed': False}
+        genesys_data = json.load(f)
+    genesys_data[project_id] = {'file_map': FILE_MAP, 'svn_url': svn_url, 'file_name': project_file_name, 'closed': False}
 
     with open(data_dir, 'w') as f:
-        json.dump(data, f)
+        json.dump(genesys_data, f)
+
+    print(genesys_data)
