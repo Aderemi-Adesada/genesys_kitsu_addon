@@ -1,20 +1,11 @@
-from gazu.project import new_project
-from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL, FILE_MAP
 import requests
-import gazu
+from .config import GENESIS_HOST, GENESIS_PORT
 import json
 import os
 from slugify import slugify
-from flask import current_app
-from zou import app
 from zou.app.services import (
-                                file_tree_service,
-                                persons_service,
                                 projects_service,
                                 assets_service,
-                                tasks_service,
-                                shots_service,
-                                entities_service
                             )
 from .utils import rename_task_file
 
@@ -23,13 +14,10 @@ def handle_event(data):
     project_id = data['project_id']
     asset_id = data['asset_id']
     project = projects_service.get_project(project_id)
-
-    project_name = project['name']
-    project_file_name = slugify(project_name, separator="_")
     asset = assets_service.get_asset(asset_id)
     asset_name = asset['name']
     asset_file_name = slugify(asset_name, separator="_")
-    svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
+    project_name = slugify(project['name'], separator='_')
 
     data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
     with open(data_dir) as file:
@@ -60,7 +48,7 @@ def handle_event(data):
                     payload=payload,
                     entity_type='asset'
                 )
-            # requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/asset/{project['name']}", json=payload)
+            requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/asset/{project_name}", json=payload)
 
         genesys_project_data['assets'][asset_id]['file_name'] = asset_file_name
         with open(data_dir, 'w') as file:

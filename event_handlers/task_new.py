@@ -1,20 +1,11 @@
-from gazu.project import new_project
-from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL, FILE_MAP
+from .config import GENESIS_HOST, GENESIS_PORT
 import requests
-import gazu
-import json
-import os
 from slugify import slugify
-from flask import current_app
-from zou import app
 from zou.app.services import (
                                 file_tree_service,
                                 persons_service,
                                 projects_service,
-                                assets_service,
                                 tasks_service,
-                                shots_service,
-                                entities_service
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 
@@ -25,11 +16,6 @@ def handle_event(data):
 
     project_name = project['name']
     project_file_name = slugify(project_name, separator="_")
-    svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
-
-    data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
-    with open(data_dir) as file:
-        genesys_data = json.load(file)
 
     task = tasks_service.get_task(data['task_id'])
     task_type = tasks_service.get_task_type(task['task_type_id'])
@@ -49,7 +35,8 @@ def handle_event(data):
                 "all_persons":all_persons,
                 "task_type":task_type_name
         }
-        # requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
+        print(payload)
+        requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
 
     
 

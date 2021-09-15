@@ -1,19 +1,11 @@
-from gazu.project import new_project
-from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL, FILE_MAP
+from .config import GENESIS_HOST, GENESIS_PORT
 import requests
-import gazu
-import json
-import os
 from slugify import slugify
-from flask import current_app
-from zou import app
 from zou.app.services import (
                                 file_tree_service,
                                 persons_service,
                                 projects_service,
-                                assets_service,
                                 tasks_service,
-                                shots_service,
                                 entities_service
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
@@ -27,13 +19,7 @@ def handle_event(data):
     task_id = data['task_id']
     task = tasks_service.get_task(task_id)
 
-    project_name = project['name']
-    project_file_name = slugify(project_name, separator="_")
-    svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
-
-    data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
-    with open(data_dir) as file:
-        genesys_data = json.load(file)
+    project_name = slugify(project['name'], separator="_")
 
     entity = entities_service.get_entity_raw(task['entity_id'])
     file_extension = 'blend'
@@ -60,5 +46,4 @@ def handle_event(data):
             'permission': 'none',
             'dependencies': dependencies_payload,
         }
-        print(payload)
-        # requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
+        requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)

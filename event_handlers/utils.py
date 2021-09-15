@@ -1,5 +1,5 @@
 import os
-from .config import FILE_MAP, GENESIS_HOST, GENESIS_PORT
+from .config import FILE_MAP
 from zou.app.services import (
                                 projects_service,
                                 tasks_service,
@@ -89,32 +89,3 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
             'task_type':task_type_name,
         }
         payload.append(task_payload)
-
-# def grant_file_access(task, person, project_id, permission='rw'):
-#     entity = entities_service.get_entity_raw(task.entity_id)
-#     file_extension = 'blend'
-#     task_type = tasks_service.get_task_type(str(task.task_type_id))
-#     task_type_name = task_type['name'].lower()
-#     dependencies = Entity.serialize_list(entity.entities_out, obj_type="Asset")
-#     project = projects_service.get_project(project_id)
-#     project_name = project['name'].replace(' ', '_').lower()
-#     working_file_path = file_tree_service.get_working_file_path(task.serialize())
-#     # working_file_path = os.path.join(working_file_path[0], entity.serialize()['name'].replace(' ', '_').lower())
-#     base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
-#     if base_file_directory:
-#         base_svn_directory = get_svn_base_directory(project, base_file_directory)
-#         dependencies_payload = list()
-#         for dependency in dependencies:
-#             task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
-#             dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
-#             dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'modeling', file_extension)
-#             dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-#             dependencies_payload.append(dependency_base_svn_directory)
-#         payload = {
-#             'base_svn_directory':base_svn_directory,
-#             "task_type":task_type['name'].lower(),
-#             'person':person.serialize(),
-#             'permission': permission,
-#             'dependencies': dependencies_payload,
-#         }
-#         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)

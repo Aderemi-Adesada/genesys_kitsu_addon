@@ -1,25 +1,15 @@
 from gazu.project import new_project
-from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL, FILE_MAP
+from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL
 import requests
-import gazu
 import json
 import os
 from slugify import slugify
-from flask import current_app
-from zou import app
 from zou.app.services import (
-                                file_tree_service,
-                                persons_service,
                                 projects_service,
-                                assets_service,
-                                tasks_service,
-                                shots_service,
-                                entities_service
                             )
 
 
 def handle_event(data):
-    # print(file_tree_service.get_tree_from_file('default'))
     project_id = data['project_id']
     project = projects_service.get_project(project_id)
 
@@ -38,14 +28,11 @@ def handle_event(data):
                 'old_project_name':old_project_file_name,
                 'new_project_name':project_file_name
                 }
-            # requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_name}", json=payload)
+            requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_file_name}", json=payload)
 
             genesys_data[project_id]['file_name'] = project_file_name
             genesys_data[project_id]['svn_url'] = svn_url
             with open(data_dir, 'w') as file:
                 json.dump(genesys_data, file, indent=2)
-            
-            print(genesys_data)
     except KeyError:
-        print(genesys_data)
         print("Project not found in genesys")

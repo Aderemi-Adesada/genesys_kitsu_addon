@@ -143,5 +143,36 @@
         "file_name": "sh04"
       }
     }
+  },
+  "6dda38fa-bb2d-40bd-a206-d78ad0f89cb8": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/ultimate_test",
+    "file_name": "ultimate_test",
+    "closed": false,
+    "assets": {
+      "780dea0c-553a-4a8a-b9ec-5c90b29c04ea": {
+        "file_name": "a_b"
+      },
+      "9eaf337a-30dc-457d-a150-e891b0eceb3d": {
+        "file_name": "a"
+      },
+      "637bb4f1-a587-4901-b4b5-6c19dc4650b0": {
+        "file_name": "girls"
+      }
+    },
+    "shots": {}
   }
 }

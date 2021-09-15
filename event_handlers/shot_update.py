@@ -1,20 +1,11 @@
-from gazu.project import new_project
-from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL, FILE_MAP
+from .config import GENESIS_HOST, GENESIS_PORT
 import requests
-import gazu
 import json
 import os
 from slugify import slugify
-from flask import current_app
-from zou import app
 from zou.app.services import (
-                                file_tree_service,
-                                persons_service,
                                 projects_service,
-                                assets_service,
-                                tasks_service,
                                 shots_service,
-                                entities_service
                             )
 from .utils import rename_task_file
 
@@ -24,12 +15,10 @@ def handle_event(data):
     shot_id = data['shot_id']
     project = projects_service.get_project(project_id)
 
-    project_name = project['name']
-    project_file_name = slugify(project_name, separator="_")
     shot = shots_service.get_shot(shot_id)
     shot_name = shot['name']
     shot_file_name = slugify(shot_name, separator="_")
-    svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
+    project_name = slugify(project['name'], separator='_')
 
     data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
     with open(data_dir) as file:
@@ -60,7 +49,7 @@ def handle_event(data):
                     payload=payload,
                     entity_type='shot'
                 )
-            # requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/shot/{project['name']}", json=payload)
+            requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/shot/{project_name}", json=payload)
 
         genesys_project_data['shots'][shot_id]['file_name'] = shot_file_name
         with open(data_dir, 'w') as file:
