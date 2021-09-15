@@ -16,11 +16,10 @@ from zou.app.services import (
                                 shots_service,
                                 entities_service
                             )
+from .utils import get_base_file_directory, get_svn_base_directory
 
 
 def handle_event(data):
-    print(data)
-    # print(file_tree_service.get_tree_from_file('default'))
     project_id = data['project_id']
     project = projects_service.get_project(project_id)
 
@@ -33,26 +32,24 @@ def handle_event(data):
         genesys_data = json.load(file)
 
     task = tasks_service.get_task(data['task_id'])
-    print(task)
+    task_type = tasks_service.get_task_type(task['task_type_id'])
+    task_type_name = task_type['name'].lower()
+    file_extension = 'blend'
+    working_file_path = file_tree_service.get_working_file_path(task)
 
 
-    # file_extension = 'blend'
-    # task_type_name = task_type['name'].lower()
-    # working_file_path = file_tree_service.get_working_file_path(task.serialize())
-    # project = projects_service.get_project(project_id)
-    # all_persons = persons_service.get_persons()
-    # project_name = project['name'].replace(' ', '_').lower()
-    # base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
-    # if base_file_directory:
-    #     base_svn_directory = get_svn_base_directory(project, base_file_directory)
-    #     payload = {
-    #             "project":project,
-    #             "base_file_directory":base_file_directory,
-    #             "base_svn_directory":base_svn_directory,
-    #             "all_persons":all_persons,
-    #             "task_type":task_type_name
-    #     }
-    #     requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_name}", json=payload)
+    all_persons = persons_service.get_persons()
+    base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
+    if base_file_directory:
+        base_svn_directory = get_svn_base_directory(project, base_file_directory)
+        payload = {
+                "project":project,
+                "base_file_directory":base_file_directory,
+                "base_svn_directory":base_svn_directory,
+                "all_persons":all_persons,
+                "task_type":task_type_name
+        }
+        # requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
 
     
 

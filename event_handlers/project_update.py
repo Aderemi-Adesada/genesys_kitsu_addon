@@ -43,7 +43,7 @@ def handle_event(data):
             genesys_data[project_id]['file_name'] = project_file_name
             genesys_data[project_id]['svn_url'] = svn_url
             with open(data_dir, 'w') as file:
-                json.dump(genesys_data, file)
+                json.dump(genesys_data, file, indent=2)
             
             print(genesys_data)
     except KeyError:

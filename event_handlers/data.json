@@ -1,1 +1,147 @@
-{}
+{
+  "a0df398c-c642-4a3c-aa29-e5cf3e44a212": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/cxb",
+    "file_name": "cxb",
+    "closed": false
+  },
+  "a9ec6a41-5639-4efd-98d3-c623f8beee4f": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/dfgdhgh",
+    "file_name": "dfgdhgh",
+    "closed": false
+  },
+  "1326ae7f-b461-4bdd-a570-9b0966d972ab": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/dfdfhfjdshs",
+    "file_name": "dfdfhfjdshs",
+    "closed": false
+  },
+  "5063b687-a7c3-4976-a801-3bc362903daf": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/ddgdfs",
+    "file_name": "ddgdfs",
+    "closed": false
+  },
+  "d83e79cb-8f2e-440c-87c8-e3adda3cf698": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/this_ia_a_test_file",
+    "file_name": "this_ia_a_test_file",
+    "closed": false
+  },
+  "79a5e678-4ef3-470b-abe9-a72b3d3207df": {
+    "file_map": {
+      "shading": "base",
+      "concept": "none",
+      "modeling": "base",
+      "rigging": "base",
+      "storyboard": "none",
+      "layout": "layout",
+      "previz": "layout",
+      "animation": "anim",
+      "lighting": "lighting",
+      "fx": "fx",
+      "rendering": "lighting",
+      "compositing": "comp"
+    },
+    "svn_url": "http://localhost/svn/test",
+    "file_name": "test",
+    "closed": false,
+    "assets": {
+      "79bcab15-6d45-4ff6-9fbd-3683c1bc50d2": {
+        "file_name": "gb23"
+      },
+      "99d4afa7-f5f8-420a-8c71-4456e50302ad": {
+        "file_name": "c"
+      },
+      "17ee1e0f-cff8-4320-9de1-db37765a1849": {
+        "file_name": "k"
+      },
+      "12d2816d-195a-4d5d-a46f-249b0d2322f5": {
+        "file_name": "o2"
+      },
+      "0542f001-5479-48f6-8e43-8f6ac56d68a2": {
+        "file_name": "f5"
+      }
+    },
+    "shots": {
+      "aa22f01a-5260-4334-b18c-9e0d73d0dac5": {
+        "file_name": "sh0123"
+      },
+      "5173d804-df2f-4e8b-9432-eb1e38125bba": {
+        "file_name": "sh02"
+      },
+      "86925a83-f860-43f3-a462-cbf377117779": {
+        "file_name": "sh03"
+      },
+      "27b46ce1-be6e-4c68-8d96-0a6300adbbbc": {
+        "file_name": "sh04"
+      }
+    }
+  }
+}
