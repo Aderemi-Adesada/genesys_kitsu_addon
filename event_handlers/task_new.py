@@ -1,5 +1,6 @@
 from .config import GENESIS_HOST, GENESIS_PORT
 import requests
+import os
 from slugify import slugify
 from zou.app.services import (
                                 file_tree_service,
@@ -25,7 +26,15 @@ def handle_event(data):
 
 
     all_persons = persons_service.get_persons()
-    base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
+    if task_type_name in {'Editing', 'Edit', 'editing', 'edit'}:
+        if task['episode_name'] == None:
+            base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
+                project['file_tree']['working']['root'],project_file_name,'edit','edit.blend')
+        else:
+            base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
+                project['file_tree']['working']['root'],project_file_name,'edit',f"{task['episode_name']}_edit.blend")
+    else:
+        base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
     if base_file_directory:
         base_svn_directory = get_svn_base_directory(project, base_file_directory)
         payload = {
