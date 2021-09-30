@@ -18,7 +18,8 @@ def handle_event(data):
     project_name = project['name']
     project_file_name = slugify(project_name, separator="_")
 
-    task = tasks_service.get_task(data['task_id'])
+    # task = tasks_service.get_task(data['task_id'])
+    task = tasks_service.get_full_task(data['task_id'])
     task_type = tasks_service.get_task_type(task['task_type_id'])
     task_type_name = task_type['name'].lower()
     file_extension = 'blend'
@@ -26,13 +27,16 @@ def handle_event(data):
 
 
     all_persons = persons_service.get_persons()
+    production_type = task['project']['production_type']
     if task_type_name in {'Editing', 'Edit', 'editing', 'edit'}:
-        if task['episode_name'] == None:
+        print(task['project']['production_type'])
+        if production_type != 'tvshow':
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
                 project['file_tree']['working']['root'],project_file_name,'edit','edit.blend')
         else:
+            episode_name = slugify(task['episode']['name'], separator="_")
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
-                project['file_tree']['working']['root'],project_file_name,'edit',f"{task['episode_name']}_edit.blend")
+                project['file_tree']['working']['root'],project_file_name,'edit',f"{episode_name}_edit.blend")
     else:
         base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
     if base_file_directory:
@@ -44,7 +48,11 @@ def handle_event(data):
                 "all_persons":all_persons,
                 "task_type":task_type_name
         }
-        print(payload)
+        print('=============================================================================')
+        print(payload["base_file_directory"])
+        print(payload["base_svn_directory"])
+        print(payload["task_type"])
+        print('=============================================================================')
         requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
 
     

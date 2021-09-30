@@ -18,7 +18,8 @@ def handle_event(data):
     person_id = data['person_id']
     person = persons_service.get_person(person_id)
     task_id = data['task_id']
-    task = tasks_service.get_task(task_id)
+    # task = tasks_service.get_task(task_id)
+    task = tasks_service.get_full_task(data['task_id'])
 
     project_name = slugify(project['name'], separator="_")
 
@@ -30,14 +31,16 @@ def handle_event(data):
     project_name = project['name'].replace(' ', '_').lower()
     working_file_path = file_tree_service.get_working_file_path(task)
 
+    production_type = task['project']['production_type']
     if task_type_name in {'Editing', 'Edit', 'editing', 'edit'}:
         dependencies = []
-        if task['episode_name'] == None:
+        if production_type != 'tvshow':
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
                 project['file_tree']['working']['root'],project_name,'edit','edit.blend')
         else:
+            episode_name = slugify(task['episode']['name'], separator="_")
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
-                project['file_tree']['working']['root'],project_name,'edit',f"{task['episode_name']}_edit.blend")
+                project['file_tree']['working']['root'],project_name,'edit',f"{episode_name}_edit.blend")
     else:
         dependencies = Entity.serialize_list(entity.entities_out, obj_type="Asset")
         base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)

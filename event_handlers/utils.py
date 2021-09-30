@@ -56,7 +56,6 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
     task_type_name = task_type['name'].lower()
     file_extension = 'blend'
     # FIXME working file path different from new entity name when task is renamed
-    # added a hack for now
 
     if entity_type == 'asset':
         # set working file path to previous name
