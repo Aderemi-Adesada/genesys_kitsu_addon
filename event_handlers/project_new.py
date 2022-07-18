@@ -26,7 +26,7 @@ def handle_event(data):
         file_tree_dir = os.path.join(os.path.dirname(__file__), 'eaxum.json')
         with open(file_tree_dir, 'r') as f:
             file_tree = json.load(f)
-        project_data =  {'file_tree': file_tree, 'data': {'file_map': FILE_MAP, 'svn_url': svn_url}}
+        project_data =  {'file_tree': file_tree, 'data': {'file_map': FILE_MAP, 'svn_repositories': {'default': svn_url}}}
         projects_service.update_project(project_id, project_data)
 
     requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_file_name}")
