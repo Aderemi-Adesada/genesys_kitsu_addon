@@ -29,7 +29,6 @@ def handle_event(data):
     all_persons = persons_service.get_persons()
     production_type = task['project']['production_type']
     if task_type_name in {'Editing', 'Edit', 'editing', 'edit'}:
-        print(task['project']['production_type'])
         if production_type != 'tvshow':
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
                 project['file_tree']['working']['root'],project_file_name,'edit','edit.blend')
@@ -48,11 +47,6 @@ def handle_event(data):
                 "all_persons":all_persons,
                 "task_type":task_type_name
         }
-        print('=============================================================================')
-        print(payload["base_file_directory"])
-        print(payload["base_svn_directory"])
-        print(payload["task_type"])
-        print('=============================================================================')
         requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
 
     
