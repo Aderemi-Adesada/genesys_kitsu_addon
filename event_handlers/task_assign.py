@@ -53,7 +53,7 @@ def handle_event(data):
             dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
             dependencies_payload.append(dependency_base_svn_directory)
 
-        project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_shots']}
+        project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
         if task_type_name in project_shot_task_types:
             for shot_task_type in project_shot_task_types:
                 if task_type_name != shot_task_type:
