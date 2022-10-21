@@ -4,6 +4,8 @@ from zou.app.services import (
                                 projects_service,
                                 tasks_service,
                                 file_tree_service,
+                                assets_service,
+                                shots_service,
 
                             )
 from slugify import slugify
@@ -21,6 +23,24 @@ def update_project_data(project_id, data: dict):
     project_data.update(data)
     new_project_data = {'data': project_data}
     projects_service.update_project(project_id, new_project_data)
+
+def update_asset_data(asset_id, data: dict):
+    asset = assets_service.get_asset(asset_id)
+    if asset['data'] == None:
+        asset['data'] = {}
+    asset_data = asset['data']
+    asset_data.update(data)
+    updated_asset_data = {'data': asset_data}
+    assets_service.update_asset(asset_id, updated_asset_data)
+
+def update_shot_data(shot_id, data: dict):
+    shot = shots_service.get_shot(shot_id)
+    if shot['data'] == None:
+        shot['data'] = {}
+    shot_data = shot['data']
+    shot_data.update(data)
+    updated_shot_data = {'data': shot_data}
+    shots_service.update_shot(shot_id, updated_shot_data)
 
 def get_svn_base_directory(project:dict, base_file_directory):
     '''

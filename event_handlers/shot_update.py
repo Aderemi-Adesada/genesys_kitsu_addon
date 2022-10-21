@@ -7,7 +7,7 @@ from zou.app.services import (
                                 projects_service,
                                 shots_service,
                             )
-from .utils import rename_task_file
+from .utils import rename_task_file, update_shot_data
 
 
 def handle_event(data):
@@ -20,20 +20,13 @@ def handle_event(data):
     shot_file_name = slugify(shot_name, separator="_")
     project_name = slugify(project['name'], separator='_')
 
-    data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
-    with open(data_dir) as file:
-        genesys_data = json.load(file)
+    if 'file_name' in shot['data'].keys():
+        old_shot_file_name = shot['data']['file_name']
+    else:
+        shot_info = {'file_name': shot_file_name}
+        update_shot_data(shot_id, shot_info)
+        old_shot_file_name = shot_file_name
 
-    try:
-        genesys_project_data = genesys_data[project_id]
-    except KeyError:
-        print("Project not found in genesys")
-        return
-    try:
-        old_shot_file_name = genesys_project_data['shots'][shot_id]['file_name']
-    except KeyError:
-        print(f"shot not found in project {project_id}")
-        return
     if old_shot_file_name != shot_file_name:
         shots_service.clear_shot_cache(shot_id)
         full_shot = shots_service.get_full_shot(shot_id)
@@ -51,6 +44,5 @@ def handle_event(data):
                 )
             requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/shot/{project_name}", json=payload)
 
-        genesys_project_data['shots'][shot_id]['file_name'] = shot_file_name
-        with open(data_dir, 'w') as file:
-            json.dump(genesys_data, file, indent=2)
+        shot_info = {'file_name': shot_file_name}
+        update_shot_data(shot_id, shot_info)

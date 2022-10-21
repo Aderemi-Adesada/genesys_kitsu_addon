@@ -8,6 +8,7 @@ from zou.app.services import (
                                 assets_service,
                             )
 from .utils import rename_task_file
+from .utils import update_asset_data
 
 
 def handle_event(data):
@@ -19,20 +20,13 @@ def handle_event(data):
     asset_file_name = slugify(asset_name, separator="_")
     project_name = slugify(project['name'], separator='_')
 
-    data_dir = os.path.join(os.path.dirname(__file__), 'data.json')
-    with open(data_dir) as file:
-        genesys_data = json.load(file)
+    if 'file_name' in asset['data'].keys():
+        old_asset_file_name = asset['data']['file_name']
+    else:
+        asset_info = {'file_name': asset_file_name}
+        update_asset_data(asset_id, asset_info)
+        old_asset_file_name = asset_file_name
 
-    try:
-        genesys_project_data = genesys_data[project_id]
-    except KeyError:
-        print("Project not found in genesys")
-        return
-    try:
-        old_asset_file_name = genesys_project_data['assets'][asset_id]['file_name']
-    except KeyError:
-        print(f"asset not found in project {project_id}")
-        return
     if old_asset_file_name != asset_file_name:
         assets_service.clear_asset_cache(asset_id)
         full_asset = assets_service.get_full_asset(asset_id)
@@ -50,6 +44,5 @@ def handle_event(data):
                 )
             requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/asset/{project_name}", json=payload)
 
-        genesys_project_data['assets'][asset_id]['file_name'] = asset_file_name
-        with open(data_dir, 'w') as file:
-            json.dump(genesys_data, file, indent=2)
+        asset_info = {'file_name': asset_file_name}
+        update_asset_data(asset_id, asset_info)
