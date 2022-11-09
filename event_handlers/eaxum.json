@@ -18,8 +18,8 @@
         }
     },
     "output": {
-        "mountpoint": "/simple",
-        "root": "productions/export",
+        "mountpoint": "//rukia/render",
+        "root": "previews",
         "folder_path": {
             "shot": "<Project>/shots/<Sequence>/<Shot>/<OutputType>",
             "asset": "<Project>/assets/<AssetType>/<Asset>/<OutputType>",
