@@ -25,7 +25,6 @@ def handle_event(data):
     file_extension = 'blend'
     working_file_path = file_tree_service.get_working_file_path(task)
 
-
     all_persons = persons_service.get_persons()
     production_type = task['project']['production_type']
     if task_type_name in {'Editing', 'Edit', 'editing', 'edit'}:
@@ -41,6 +40,7 @@ def handle_event(data):
     if base_file_directory:
         base_svn_directory = get_svn_base_directory(project, base_file_directory)
         payload = {
+                "task": task,
                 "project":project,
                 "base_file_directory":base_file_directory,
                 "base_svn_directory":base_svn_directory,
