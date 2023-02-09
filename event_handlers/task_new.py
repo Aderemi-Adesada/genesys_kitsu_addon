@@ -9,8 +9,9 @@ from zou.app.services import (
                                 tasks_service,
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
+from .utils import with_app_context
 
-
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     project = projects_service.get_project(project_id)

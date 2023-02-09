@@ -1,5 +1,7 @@
 import os
 from .config import FILE_MAP
+from functools import wraps
+from flask import current_app
 from zou.app.services import (
                                 projects_service,
                                 tasks_service,
@@ -9,6 +11,14 @@ from zou.app.services import (
 
                             )
 from slugify import slugify
+from zou.app import app
+
+def with_app_context(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with app.app_context():
+            return func(*args, **kwargs)
+    return wrapper
 
 def update_file_map(project_id, data: dict):
     project = projects_service.get_project(project_id)

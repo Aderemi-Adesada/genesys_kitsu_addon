@@ -6,8 +6,9 @@ from zou.app.services import (
                                 assets_service,
                             )
 from .utils import update_asset_data
+from .utils import with_app_context
 
-
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     asset_id = data['asset_id']

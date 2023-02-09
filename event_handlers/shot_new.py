@@ -5,7 +5,9 @@ from zou.app.services import (
                                 shots_service,
                             )
 from .utils import update_shot_data
+from .utils import with_app_context
 
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     shot_id = data['shot_id']
