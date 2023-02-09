@@ -59,6 +59,8 @@ def get_svn_base_directory(project:dict, base_file_directory):
     return base_svn_directory.lower()
 
 def get_base_file_directory(project, working_file_path, task_type_name, file_extension):
+    if task_type_name == 'base':
+        return f'{working_file_path}.{file_extension}'
     project_id = project['id']
     project_file_map = project['data'].get('file_map')
     if project_file_map == None:
@@ -66,15 +68,14 @@ def get_base_file_directory(project, working_file_path, task_type_name, file_ext
         project_file_map = FILE_MAP
     task_type_map = project_file_map.get(task_type_name)
     if task_type_map == 'base':
-        base_file_directory = f'{working_file_path}.{file_extension}'
+        return f'{working_file_path}.{file_extension}'
     elif task_type_map == 'none':
-        base_file_directory = None
+        return None
     elif task_type_map == None:
         update_file_map(project_id, {task_type_name:task_type_name})
-        base_file_directory = f'{working_file_path}_{task_type_name}.{file_extension}'
+        return f'{working_file_path}_{task_type_name}.{file_extension}'
     else:
-        base_file_directory = f'{working_file_path}_{task_type_map}.{file_extension}'
-    return base_file_directory
+        return f'{working_file_path}_{task_type_map}.{file_extension}'
 
 def rename_task_file(new_name, old_name, task, project, payload, entity_type):
     tasks_service.clear_task_cache(task['id'])

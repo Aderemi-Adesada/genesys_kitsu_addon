@@ -39,6 +39,22 @@ def handle_event(data):
             episode_name = slugify(task['episode']['name'], separator="_")
             base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
                 project['file_tree']['working']['root'],project_name,'edit',f"{episode_name}_edit.blend")
+    #TODO address when staging is no longer the main file
+    # elif task_type_name.lower() in {'staging', 'stage'}:
+    #     main_file_directory = get_base_file_directory(project, working_file_path, 'base', file_extension)
+    #     if main_file_directory:
+    #         main_svn_directory = get_svn_base_directory(project, main_file_directory)
+    #         main_file_payload = {
+    #                 "task": task,
+    #                 "project":project,
+    #                 "base_file_directory":main_file_directory,
+    #                 "base_svn_directory":main_svn_directory,
+    #                 "all_persons":all_persons,
+    #                 "task_type":task_type_name,
+    #                 "main_file_name": os.path.basename(working_file_path),
+    #         }
+    #         requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=main_file_payload)
+    #     base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
     else:
         dependencies = Entity.serialize_list(entity.entities_out, obj_type="Asset")
         base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
@@ -49,10 +65,10 @@ def handle_event(data):
             task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
             dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
             #FIXME hard code of modelling
-            dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'modeling', file_extension)
+            dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base', file_extension)
             dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
             dependencies_payload.append(dependency_base_svn_directory)
-
+        #TODO implement DRY
         project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
         if task_type_name in project_shot_task_types:
             for shot_task_type in project_shot_task_types:
@@ -63,11 +79,24 @@ def handle_event(data):
                     if dependency_base_file_directory:
                         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
                         dependencies_payload.append(dependency_base_svn_directory)
+        
+        project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
+        if task_type_name in project_asset_task_types:
+            for asset_task_type in project_asset_task_types:
+                if task_type_name != asset_task_type:
+                    task_type_map = asset_task_type
+                    dependency_working_file_path = file_tree_service.get_working_file_path(task)
+                    dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, task_type_map, file_extension)
+                    if dependency_base_file_directory:
+                        dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
+                        dependencies_payload.append(dependency_base_svn_directory)
         payload = {
+            'task': task,
             'base_svn_directory':base_svn_directory,
             "task_type":task_type['name'].lower(),
             'person':person,
             'permission': 'rw',
             'dependencies': dependencies_payload,
+            "main_file_name": os.path.basename(working_file_path),
         }
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)

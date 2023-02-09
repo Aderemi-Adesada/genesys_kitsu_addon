@@ -28,5 +28,5 @@ def handle_event(data):
             file_tree = json.load(f)
         project_data =  {'file_tree': file_tree, 'data': {'file_map': FILE_MAP, 'svn_repositories': {'default': svn_url}}, 'file_name': project_file_name}
         projects_service.update_project(project_id, project_data)
-
-    requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_file_name}")
+    r = requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/project/{project_file_name}")
+    print(r.status_code)

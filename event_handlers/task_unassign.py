@@ -51,11 +51,11 @@ def handle_event(data):
         for dependency in dependencies:
             task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
             dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
-            dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'modeling', file_extension)
+            dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base', file_extension)
             dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
             dependencies_payload.append(dependency_base_svn_directory)
 
-        project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_shots']}
+        project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
         if task_type_name in project_shot_task_types:
             for shot_task_type in project_shot_task_types:
                 if task_type_name != shot_task_type:
@@ -65,11 +65,24 @@ def handle_event(data):
                     if dependency_base_file_directory:
                         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
                         dependencies_payload.append(dependency_base_svn_directory)
+
+        project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
+        if task_type_name in project_asset_task_types:
+            for asset_task_type in project_asset_task_types:
+                if task_type_name != asset_task_type:
+                    task_type_map = asset_task_type
+                    dependency_working_file_path = file_tree_service.get_working_file_path(task)
+                    dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, task_type_map, file_extension)
+                    if dependency_base_file_directory:
+                        dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
+                        dependencies_payload.append(dependency_base_svn_directory)
         payload = {
+            'task': task,
             'base_svn_directory':base_svn_directory,
             "task_type":task_type['name'].lower(),
             'person':person,
             'permission': 'none',
             'dependencies': dependencies_payload,
+            'main_file_name': os.path.basename(working_file_path),
         }
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
