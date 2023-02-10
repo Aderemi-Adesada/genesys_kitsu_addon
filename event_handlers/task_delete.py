@@ -16,8 +16,6 @@ from zou.app.services import (
                                 shots_service,
                                 entities_service
                             )
-from .utils import with_app_context
 
-@with_app_context
 def handle_event(data):
     print(data)

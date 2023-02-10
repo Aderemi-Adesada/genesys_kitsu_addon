@@ -1,15 +1,18 @@
 import os
 from .config import FILE_MAP
 from functools import wraps
-from flask import current_app
 from zou.app.services import (
                                 projects_service,
                                 tasks_service,
                                 file_tree_service,
                                 assets_service,
                                 shots_service,
+                                entities_service,
+                                persons_service,
 
                             )
+from zou.app.utils import cache
+from zou.app.services.exception import PersonNotFoundException
 from slugify import slugify
 from zou.app import app
 
@@ -125,3 +128,47 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
             'task_type':task_type_name,
         }
         payload.append(task_payload)
+
+@cache.memoize_function(120)
+def get_full_task(task_id):
+    task = tasks_service.get_task_with_relations(task_id)
+    task_type = tasks_service.get_task_type(task["task_type_id"])
+    project = projects_service.get_project(task["project_id"])
+    task_status = tasks_service.get_task_status(task["task_status_id"])
+    entity = entities_service.get_entity(task["entity_id"])
+    entity_type = entities_service.get_entity_type(entity["entity_type_id"])
+    assignees = [
+        persons_service.get_person(assignee_id)
+        for assignee_id in task["assignees"]
+    ]
+
+    task.update(
+        {
+            "entity": entity,
+            "entity_type": entity_type,
+            "persons": assignees,
+            "project": project,
+            "task_status": task_status,
+            "task_type": task_type,
+            "type": "Task",
+        }
+    )
+
+    try:
+        assigner = persons_service.get_person(task["assigner_id"])
+        task["assigner"] = assigner
+    except PersonNotFoundException:
+        pass
+
+    if entity["parent_id"] is not None:
+        if entity_type["name"] not in ["Asset", "Shot"]:
+            episode_id = entity["parent_id"]
+        else:
+            sequence = shots_service.get_sequence(entity["parent_id"])
+            task["sequence"] = sequence
+            episode_id = sequence["parent_id"]
+        if episode_id is not None:
+            episode = shots_service.get_episode(episode_id)
+            task["episode"] = episode
+
+    return task
