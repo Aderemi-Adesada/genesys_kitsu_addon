@@ -7,7 +7,8 @@ from zou.app.services import (
                                 persons_service,
                                 projects_service,
                                 tasks_service,
-                                entities_service
+                                entities_service,
+                                emails_service
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
@@ -101,7 +102,12 @@ def handle_event(data):
             "main_file_name": os.path.basename(working_file_path),
         }
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
-        print('111111111111111111111111111111111111111111111111111111111111111111')
         recipient = person[LOGIN_NAME]
-        message=f"You have a new {task_type['name']} task for {entity.name} \n Have a nice day"
+        (author, task_name, task_url) = emails_service.get_task_descriptors(task['assigner_id'], task)
+        # message=f"You have a new {task_type['name']} task for {project['name']} / {entity.name} \n Have a nice day"
+        message = "*%s* assigned you to <%s|%s>." % (
+            author["full_name"],
+            task_url,
+            task_name,
+        )
         send_message_to_rc(message, recipient)

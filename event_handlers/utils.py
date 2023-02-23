@@ -1,5 +1,5 @@
 import os
-from .config import FILE_MAP, USE_ROCKET_CHAT_BOT, RC_SERVER_URL, RC_USER, RC_USER_TOKEN
+from .config import FILE_MAP, USE_ROCKET_CHAT_BOT, RC_SERVER_URL, RC_USER, RC_USER_PASSWORD
 from functools import wraps
 from zou.app.services import (
                                 projects_service,
@@ -15,7 +15,7 @@ from zou.app.utils import cache
 from zou.app.services.exception import PersonNotFoundException
 from slugify import slugify
 from zou.app import app
-from .rocketchat.rocketchat import RocketChat
+from .rocketchat import RocketChat
 from requests import sessions
 
 def with_app_context(func):
@@ -180,19 +180,16 @@ def send_message_to_rc(message, recipient):
     print(USE_ROCKET_CHAT_BOT)
     print(RC_SERVER_URL)
     print(RC_USER)
-    print(RC_USER_TOKEN)
+    print(RC_USER_PASSWORD)
     print('00000000000000000000000000000000000000000000000000000000000000000000000000')
     if USE_ROCKET_CHAT_BOT:
-        token = RC_USER_TOKEN
-        user = RC_USER
-        server_url=RC_SERVER_URL
         def get_user(users, username):
             for user in users:
                 if 'username' in user.keys() and username == user['username']:
                     return user
             return None
         with sessions.Session() as session:
-            rocket = RocketChat(user=user, auth_token=token, server_url=server_url)
+            rocket = RocketChat(user=RC_USER, password=RC_USER_PASSWORD, server_url=RC_SERVER_URL)
             user = get_user(rocket.users_list().json()['users'], recipient)
             if user:
                 user_id = user['_id']
