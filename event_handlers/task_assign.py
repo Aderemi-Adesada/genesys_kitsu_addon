@@ -1,4 +1,4 @@
-from .config import GENESIS_PORT, GENESIS_HOST
+from .config import GENESIS_PORT, GENESIS_HOST, LOGIN_NAME
 import requests
 import os
 from slugify import slugify
@@ -11,7 +11,7 @@ from zou.app.services import (
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
-from .utils import get_full_task
+from .utils import get_full_task, send_message_to_rc
 
 def handle_event(data):
     project_id = data['project_id']
@@ -101,3 +101,7 @@ def handle_event(data):
             "main_file_name": os.path.basename(working_file_path),
         }
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
+        print('111111111111111111111111111111111111111111111111111111111111111111')
+        recipient = person[LOGIN_NAME]
+        message=f"You have a new {task_type['name']} task for {entity.name} \n Have a nice day"
+        send_message_to_rc(message, recipient)
