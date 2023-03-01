@@ -8,6 +8,8 @@ from . import (
     task_new,
     task_assign,
     task_unassign,
+    task_status,
+    comment_new,
     )
 
 event_map = {
@@ -19,5 +21,7 @@ event_map = {
     "shot:update": shot_update,
     "task:new": task_new,
     "task:assign": task_assign,
-    "task:unassign":task_unassign
+    "task:unassign":task_unassign,
+    "task:status-changed":task_status,
+    "comment:new":comment_new,
 }

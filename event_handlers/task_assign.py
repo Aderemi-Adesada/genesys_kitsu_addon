@@ -12,7 +12,7 @@ from zou.app.services import (
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
-from .utils import get_full_task, send_message_to_rc
+from .utils import get_full_task, send_assignation_notification
 
 def handle_event(data):
     project_id = data['project_id']
@@ -102,12 +102,4 @@ def handle_event(data):
             "main_file_name": os.path.basename(working_file_path),
         }
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
-        recipient = person[LOGIN_NAME]
-        (author, task_name, task_url) = emails_service.get_task_descriptors(task['assigner_id'], task)
-        # message=f"You have a new {task_type['name']} task for {project['name']} / {entity.name} \n Have a nice day"
-        message = "*%s* assigned you to <%s|%s>." % (
-            author["full_name"],
-            task_url,
-            task_name,
-        )
-        send_message_to_rc(message, recipient)
+        send_assignation_notification(person[LOGIN_NAME], task)

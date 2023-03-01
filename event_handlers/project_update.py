@@ -16,7 +16,8 @@ def handle_event(data):
     project_name = project['name']
     project_file_name = slugify(project_name, separator="_")
     svn_url = os.path.join(SVN_SERVER_PARENT_URL, project_file_name)
-    
+    if not project['data']:
+        project['data'] = {}
     if 'file_name' in project['data'].keys():
         old_project_file_name = project['data']['file_name']
     else:

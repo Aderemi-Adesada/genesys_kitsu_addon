@@ -9,6 +9,7 @@ from zou.app.services import (
                                 shots_service,
                                 entities_service,
                                 persons_service,
+                                emails_service,
 
                             )
 from zou.app.utils import cache
@@ -176,12 +177,6 @@ def get_full_task(task_id):
     return task
 
 def send_message_to_rc(message, recipient):
-    print('00000000000000000000000000000000000000000000000000000000000000000000000000')
-    print(USE_ROCKET_CHAT_BOT)
-    print(RC_SERVER_URL)
-    print(RC_USER)
-    print(RC_USER_PASSWORD)
-    print('00000000000000000000000000000000000000000000000000000000000000000000000000')
     if USE_ROCKET_CHAT_BOT:
         def get_user(users, username):
             for user in users:
@@ -194,3 +189,23 @@ def send_message_to_rc(message, recipient):
             if user:
                 user_id = user['_id']
                 rocket.chat_post_message(message, channel=user_id)
+
+def send_assignation_notification(person_login_name, task):
+    """
+    Send a notification email telling that somenone assigned to a task the
+    person matching given person id.
+    """
+    (author, task_name, task_url) = emails_service.get_task_descriptors(task['assigner_id'], task)
+    author_full_name = author["full_name"]
+    message = f":kitsu: *{author_full_name}* assigned you to <{task_url}|{task_name}>."
+    send_message_to_rc(message, person_login_name)
+
+def send_status_notification(person_login_name, task, previous_status_name, new_status_name, author_name):
+    (author, task_name, task_url) = emails_service.get_task_descriptors(task['assigner_id'], task)
+    message = f":kitsu: *{author_name}* changed status of <{task_url}|{task_name}> from *{previous_status_name}* to *{new_status_name}*."
+    send_message_to_rc(message, person_login_name)
+
+def send_comment_notification(person_login_name, task, text, author_name):
+    (author, task_name, task_url) = emails_service.get_task_descriptors(task['assigner_id'], task)
+    message = f':kitsu: *{author_name}* made a comment on <{task_url}|{task_name}> - "{text}".'
+    send_message_to_rc(message, person_login_name)

@@ -23,8 +23,6 @@ def handle_event(data):
     task_type_name = task_type['name'].lower()
     file_extension = 'blend'
     working_file_path = file_tree_service.get_working_file_path(task)
-    # task_type = tasks_service.get_task_type(task['task_type_id'])
-    # print(task_type)
     # is_asset = assets_service.is_asset(entity)
 
     all_persons = persons_service.get_persons()
