@@ -72,32 +72,43 @@ def get_svn_base_directory(project:dict, base_file_directory):
     root = os.path.join(project['file_tree']['working']['mountpoint'], project['file_tree']['working']['root'],project_file_name,'')
     # base_svn_directory = os.path.join(f"{project['name']}:",base_file_directory.split(root.lower(),1)[1])
     base_svn_directory = os.path.join(f"{project_file_name}:",base_file_directory.split(root.lower(),1)[1])
-    return base_svn_directory.lower()
+    return base_svn_directory
 
-def get_base_file_directory(project, working_file_path, task_type_name, file_extension):
+def get_base_file_directory(project, working_file_path, task_type_name):
     if task_type_name == 'base':
-        return f'{working_file_path}.{file_extension}'
+        return [f"{working_file_path}.blend"]
     project_id = project['id']
     project_file_map = project['data'].get('file_map')
     if project_file_map == None:
         update_project_data(project_id, {'file_map': FILE_MAP})
         project_file_map = FILE_MAP
     task_type_map = project_file_map.get(task_type_name)
-    if task_type_map == 'base':
-        return f'{working_file_path}.{file_extension}'
-    elif task_type_map == 'none':
+    if task_type_map['file'] == 'base':
+        working_files = []
+        for sofware in task_type_map['softwares']:
+            working_file = f"{working_file_path}.{sofware['extension']}"
+            working_files.append(working_file)
+        return working_files
+    elif task_type_map['file'] == 'none':
         return None
     elif task_type_map == None:
-        update_file_map(project_id, {task_type_name:task_type_name})
-        return f'{working_file_path}_{task_type_name}.{file_extension}'
+        new_file_map = {task_type_name:{
+            'file': task_type_name,
+            'softwares': [{'name': 'blender','extension': 'blend','use_default': True,'alternate': 'none'}]
+        }}
+        update_file_map(project_id, new_file_map)
+        return [f"{working_file_path}_{task_type_name}.{'blend'}"]
     else:
-        return f'{working_file_path}_{task_type_map}.{file_extension}'
+        working_files = []
+        for sofware in task_type_map['softwares']:
+            working_file = f"{working_file_path}_{task_type_map['file']}.{sofware['extension']}"
+            working_files.append(working_file)
+        return working_files
 
 def rename_task_file(new_name, old_name, task, project, payload, entity_type):
     tasks_service.clear_task_cache(task['id'])
     task_type = tasks_service.get_task_type(task['task_type_id'])
     task_type_name = task_type['name'].lower()
-    file_extension = 'blend'
     # FIXME working file path different from new entity name when task is renamed
 
     if entity_type == 'asset':
@@ -116,8 +127,8 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
         shot_folder = os.path.join(os.path.dirname(os.path.dirname(working_file_path)), \
             new_file_name.rsplit('_', 1)[1])
         new_working_file_path = os.path.join(shot_folder, new_file_name)
-    base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
-    new_base_file_directory = get_base_file_directory(project, new_working_file_path, task_type_name, file_extension)
+    base_file_directory = get_base_file_directory(project, working_file_path, task_type_name)
+    new_base_file_directory = get_base_file_directory(project, new_working_file_path, task_type_name)
     if base_file_directory:
         base_svn_directory = get_svn_base_directory(project, base_file_directory)
         new_base_svn_directory = get_svn_base_directory(project, new_base_file_directory)
@@ -178,17 +189,22 @@ def get_full_task(task_id):
 
 def send_message_to_rc(message, recipient):
     if USE_ROCKET_CHAT_BOT:
-        def get_user(users, username):
-            for user in users:
-                if 'username' in user.keys() and username == user['username']:
-                    return user
-            return None
-        with sessions.Session() as session:
-            rocket = RocketChat(user=RC_USER, password=RC_USER_PASSWORD, server_url=RC_SERVER_URL)
-            user = get_user(rocket.users_list().json()['users'], recipient)
-            if user:
-                user_id = user['_id']
-                rocket.chat_post_message(message, channel=user_id)
+        try:
+            def get_user(users, username):
+                for user in users:
+                    if 'username' in user.keys() and username == user['username']:
+                        return user
+                return None
+            with sessions.Session() as session:
+                rocket = RocketChat(user=RC_USER, password=RC_USER_PASSWORD, server_url=RC_SERVER_URL)
+                user = get_user(rocket.users_list().json()['users'], recipient)
+                if user:
+                    user_id = user['_id']
+                    rocket.chat_post_message(message, channel=user_id)
+        except Exception as e:
+            print('Failed to send message to rocket chat')
+            print(e)
+
 
 def send_assignation_notification(person_login_name, task):
     """

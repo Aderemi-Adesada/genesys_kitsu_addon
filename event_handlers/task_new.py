@@ -21,7 +21,6 @@ def handle_event(data):
     task = get_full_task(data['task_id'])
     task_type = tasks_service.get_task_type(task['task_type_id'])
     task_type_name = task_type['name'].lower()
-    file_extension = 'blend'
     working_file_path = file_tree_service.get_working_file_path(task)
     # is_asset = assets_service.is_asset(entity)
 
@@ -29,15 +28,15 @@ def handle_event(data):
     production_type = task['project']['production_type']
     if task_type_name.lower() in {'editing', 'edit'}:
         if production_type != 'tvshow':
-            base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
-                project['file_tree']['working']['root'],project_file_name,'edit','edit.blend')
+            base_file_directories = [os.path.join(project['file_tree']['working']['mountpoint'], \
+                project['file_tree']['working']['root'],project_file_name,'edit','edit.blend')]
         else:
             episode_name = slugify(task['episode']['name'], separator="_")
-            base_file_directory = os.path.join(project['file_tree']['working']['mountpoint'], \
-                project['file_tree']['working']['root'],project_file_name,'edit',f"{episode_name}_edit.blend")
+            base_file_directories = [os.path.join(project['file_tree']['working']['mountpoint'], \
+                project['file_tree']['working']['root'],project_file_name,'edit',f"{episode_name}_edit.blend")]
     #TODO address when staging is no longer the main file
     # elif task_type_name.lower() in {'staging', 'stage'}:
-    #     main_file_directory = get_base_file_directory(project, working_file_path, 'base', file_extension)
+    #     main_file_directory = get_base_file_directory(project, working_file_path, 'base')
     #     if main_file_directory:
     #         main_svn_directory = get_svn_base_directory(project, main_file_directory)
     #         main_file_payload = {
@@ -50,21 +49,22 @@ def handle_event(data):
     #                 "main_file_name": os.path.basename(working_file_path),
     #         }
     #         requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=main_file_payload)
-    #     base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
+    #     base_file_directory = get_base_file_directory(project, working_file_path, task_type_name)
     else:
-        base_file_directory = get_base_file_directory(project, working_file_path, task_type_name, file_extension)
-    if base_file_directory:
-        base_svn_directory = get_svn_base_directory(project, base_file_directory)
-        payload = {
-                "task": task,
-                "project":project,
-                "base_file_directory":base_file_directory,
-                "base_svn_directory":base_svn_directory,
-                "all_persons":all_persons,
-                "task_type":task_type_name,
-                "main_file_name": os.path.basename(working_file_path),
-        }
-        requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
+        base_file_directories = get_base_file_directory(project, working_file_path, task_type_name)
+    if base_file_directories:
+        for base_file_directory in base_file_directories:
+            base_svn_directory = get_svn_base_directory(project, base_file_directory)
+            payload = {
+                    "task": task,
+                    "project":project,
+                    "base_file_directory":base_file_directory,
+                    "base_svn_directory":base_svn_directory,
+                    "all_persons":all_persons,
+                    "task_type":task_type_name,
+                    "main_file_name": os.path.basename(working_file_path),
+            }
+            requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task/{project_file_name}", json=payload)
 
     
 
