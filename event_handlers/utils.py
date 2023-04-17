@@ -83,7 +83,14 @@ def get_base_file_directory(project, working_file_path, task_type_name):
         update_project_data(project_id, {'file_map': FILE_MAP})
         project_file_map = FILE_MAP
     task_type_map = project_file_map.get(task_type_name)
-    if task_type_map['file'] == 'base':
+    if task_type_map == None:
+        new_file_map = {task_type_name:{
+            'file': task_type_name,
+            'softwares': [{'name': 'blender','extension': 'blend','use_default': True,'alternate': 'none'}]
+        }}
+        update_file_map(project_id, new_file_map)
+        return [f"{working_file_path}_{task_type_name}.{'blend'}"]
+    elif task_type_map['file'] == 'base':
         working_files = []
         for sofware in task_type_map['softwares']:
             working_file = f"{working_file_path}.{sofware['extension']}"
@@ -91,13 +98,6 @@ def get_base_file_directory(project, working_file_path, task_type_name):
         return working_files
     elif task_type_map['file'] == 'none':
         return None
-    elif task_type_map == None:
-        new_file_map = {task_type_name:{
-            'file': task_type_name,
-            'softwares': [{'name': 'blender','extension': 'blend','use_default': True,'alternate': 'none'}]
-        }}
-        update_file_map(project_id, new_file_map)
-        return [f"{working_file_path}_{task_type_name}.{'blend'}"]
     else:
         working_files = []
         for sofware in task_type_map['softwares']:

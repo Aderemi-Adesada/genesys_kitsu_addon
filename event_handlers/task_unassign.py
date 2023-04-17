@@ -50,7 +50,7 @@ def handle_event(data):
             for dependency in dependencies:
                 task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
                 dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
-                dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')
+                dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')[0]
                 dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
                 dependencies_payload.append(dependency_base_svn_directory)
 
