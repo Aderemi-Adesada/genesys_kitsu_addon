@@ -12,7 +12,7 @@ from zou.app.services import (
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
-from .utils import get_full_task, send_assignation_notification
+from .utils import get_full_task, send_assignation_notification, set_acl
 
 def handle_event(data):
     project_id = data['project_id']
@@ -62,46 +62,13 @@ def handle_event(data):
     if base_file_directories:
         for base_file_directory in base_file_directories:
             base_svn_directory = get_svn_base_directory(project, base_file_directory)
-            dependencies_payload = list()
-            for dependency in dependencies:
-                task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
-                dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
-                #FIXME hard code of modelling
-                dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')[0]
-                dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                dependencies_payload.append(dependency_base_svn_directory)
-            #TODO implement DRY
-            project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
-            if task_type_name in project_shot_task_types:
-                for shot_task_type in project_shot_task_types:
-                    if task_type_name != shot_task_type:
-                        task_type_map = shot_task_type
-                        dependency_working_file_path = file_tree_service.get_working_file_path(task)
-                        dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
-                        if dependency_base_file_directories:
-                            for dependency_base_file_directory in dependency_base_file_directories:
-                                dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                                dependencies_payload.append(dependency_base_svn_directory)
-            
-            project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
-            if task_type_name in project_asset_task_types:
-                for asset_task_type in project_asset_task_types:
-                    if task_type_name != asset_task_type:
-                        task_type_map = asset_task_type
-                        dependency_working_file_path = file_tree_service.get_working_file_path(task)
-                        dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
-                        if dependency_base_file_directories:
-                            for dependency_base_file_directory in dependency_base_file_directories:
-                                dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                                dependencies_payload.append(dependency_base_svn_directory)
-            payload = {
-                'task': task,
-                'base_svn_directory':base_svn_directory,
-                "task_type":task_type['name'].lower(),
-                'person':person,
-                'permission': 'rw',
-                'dependencies': dependencies_payload,
-                "main_file_name": os.path.basename(working_file_path),
-            }
-            requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
+            set_acl(
+                task=task,
+                person=person,
+                permission='rw', 
+                task_type=task_type,
+                base_svn_directory=base_svn_directory,
+                dependencies=dependencies,
+                project=project,
+                working_file_path=working_file_path)
             send_assignation_notification(person[LOGIN_NAME], task)
