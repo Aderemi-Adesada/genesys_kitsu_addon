@@ -251,15 +251,18 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
     #TODO implement DRY
     project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
     if task_type_name in project_shot_task_types:
-        for shot_task_type in project_shot_task_types:
-            if task_type_name != shot_task_type:
-                task_type_map = shot_task_type
-                dependency_working_file_path = file_tree_service.get_working_file_path(task)
-                dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
-                if dependency_base_file_directories:
-                    for dependency_base_file_directory in dependency_base_file_directories:
-                        dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                        dependencies_payload.append(dependency_base_svn_directory)
+        if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
+            for shot_task_type in project_shot_task_types:
+                if shot_task_type.lower() in {'sound', 'storyboard', 'keying'}:
+                    continue
+                if task_type_name != shot_task_type:
+                    task_type_map = shot_task_type
+                    dependency_working_file_path = file_tree_service.get_working_file_path(task)
+                    dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
+                    if dependency_base_file_directories:
+                        for dependency_base_file_directory in dependency_base_file_directories:
+                            dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
+                            dependencies_payload.append(dependency_base_svn_directory)
     
     project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
     if task_type_name in project_asset_task_types:
