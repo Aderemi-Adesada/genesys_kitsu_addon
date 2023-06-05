@@ -36,6 +36,28 @@ def handle_event(data):
                 project['file_tree']['working']['root'],project_file_name,'edit',f"{episode_name}_edit.blend")]
     else:
         base_file_directories = get_base_file_directory(project, working_file_path, task_type_name)
+    
+    entity_id = task["entity_id"]
+    genesys_entity = requests.get(
+        url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entities",
+        params={"secondary_id": entity_id}, timeout=5).json()[0]
+    task_payload = {
+        "name": f"{genesys_entity['name']}_{task_type_name}",
+        "secondary_id": task['id'],
+        "entity_id": genesys_entity['id'],
+    }
+    genesys_task = requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks", json=task_payload, timeout=5)
+    genesys_task = genesys_task.json()
+
+    file_payload = {
+        "name": os.path.basename(working_file_path),
+        "task_id": genesys_task['id'],
+        "software": "blender",
+        "software_version": "2.8",
+    }
+
+
+
     if base_file_directories:
         for base_file_directory in base_file_directories:
             base_svn_directory = get_svn_base_directory(project, base_file_directory)
