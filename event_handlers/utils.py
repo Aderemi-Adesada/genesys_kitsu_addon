@@ -7,6 +7,7 @@ from zou.app.services import (
                                 file_tree_service,
                                 assets_service,
                                 shots_service,
+                                edits_service,
                                 entities_service,
                                 persons_service,
                                 emails_service,
@@ -79,7 +80,7 @@ def update_sequence_data(sequence_id, data: dict):
     sequence_raw.update(updated_sequence_data)
 
 def update_episode_data(episode_id, data: dict):
-    episode = shots_service.get_sequence(episode_id)
+    episode = shots_service.get_episode(episode_id)
     if episode['data'] is None:
         episode['data'] = {}
     episode_data = episode['data']
@@ -88,6 +89,17 @@ def update_episode_data(episode_id, data: dict):
 
     episode_raw = shots_service.get_episode_raw(episode_id)
     episode_raw.update(updated_episode_data)
+
+def update_edit_data(edit_id, data: dict):
+    edit = edits_service.get_edit(edit_id)
+    if edit['data'] is None:
+        edit['data'] = {}
+    edit_data = edit['data']
+    edit_data.update(data)
+    updated_edit_data = {'data': edit_data}
+
+    edit_raw = edits_service.get_edit_raw(edit_id)
+    edit_raw.update(updated_edit_data)
 
 def get_svn_base_directory(project:dict, base_file_directory):
     '''
