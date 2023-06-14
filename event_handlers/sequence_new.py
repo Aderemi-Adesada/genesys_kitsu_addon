@@ -17,6 +17,15 @@ def handle_event(data):
     sequence_info = {'file_name': sequence_file_name}
     update_sequence_data(sequence_id, sequence_info)
 
+    parent_id = sequence['parent_id']
+    if parent_id:
+        genesys_parent = requests.get(
+            url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entities",
+            params={"secondary_id": parent_id}, timeout=5).json()[0]
+        genesys_parent_id = genesys_parent['id']
+    else:
+        genesys_parent_id = None
+
     genesys_entity_type = requests.get(
         url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entity_types",
         params={"name": entity_type['name']}, timeout=5).json()[0]
@@ -41,5 +50,6 @@ def handle_event(data):
         "secondary_id": sequence_id,
         "project_id": genesys_project_id,
         "entity_type_id": genesys_entity_type_id,
+        "parent_id": genesys_parent_id,
     }
     requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entities", json=payload, timeout=5)
