@@ -1,5 +1,6 @@
 import requests
 from .config import GENESIS_HOST, GENESIS_PORT
+from slugify import slugify
 from zou.app.services import (
                                 assets_service,
                                 entities_service,
@@ -12,6 +13,9 @@ def handle_event(data):
     asset = assets_service.get_asset(asset_id)
     asset_name = asset['name']
     entity_type = entities_service.get_entity_type(asset['entity_type_id'])
+    asset_file_name = slugify(asset_name, separator="_")
+    asset_info = {'file_name': asset_file_name}
+    update_asset_data(asset_id, asset_info)
 
     genesys_entity_type = requests.get(
         url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entity_types",

@@ -28,21 +28,5 @@ def handle_event(data):
     if old_asset_file_name != asset_file_name:
         payload = {"name": asset_name,"secondary_id": asset_id}
         requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entities", json=payload, timeout=5)
-        # assets_service.clear_asset_cache(asset_id)
-        # full_asset = assets_service.get_full_asset(asset_id)
-        # asset_tasks = full_asset['tasks']
-        # if asset_tasks:
-        #     payload = []
-        #     for task in asset_tasks:
-        #         rename_task_file(
-        #             new_name=asset_file_name,
-        #             old_name=old_asset_file_name,
-        #             task=task,
-        #             project=project,
-        #             payload=payload,
-        #             entity_type='asset'
-        #         )
-        #     requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/asset/{project_name}", json=payload)
-
         asset_info = {'file_name': asset_file_name}
         update_asset_data(asset_id, asset_info)

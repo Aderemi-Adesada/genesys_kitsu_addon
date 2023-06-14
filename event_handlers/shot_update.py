@@ -27,21 +27,8 @@ def handle_event(data):
         old_shot_file_name = shot_file_name
 
     if old_shot_file_name != shot_file_name:
-        shots_service.clear_shot_cache(shot_id)
-        full_shot = shots_service.get_full_shot(shot_id)
-        shot_tasks = full_shot['tasks']
-        if shot_tasks:
-            payload = []
-            for task in shot_tasks:
-                rename_task_file(
-                    new_name=shot_file_name,
-                    old_name=old_shot_file_name,
-                    task=task,
-                    project=project,
-                    payload=payload,
-                    entity_type='shot'
-                )
-            requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/shot/{project_name}", json=payload)
+        payload = {"name": shot_name,"secondary_id": shot_id}
+        requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/entities", json=payload, timeout=5)
 
         shot_info = {'file_name': shot_file_name}
         update_shot_data(shot_id, shot_info)
