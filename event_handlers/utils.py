@@ -47,7 +47,7 @@ def update_project_data(project_id, data: dict):
 
 def update_asset_data(asset_id, data: dict):
     asset = assets_service.get_asset(asset_id)
-    if asset['data'] == None:
+    if asset['data'] is None:
         asset['data'] = {}
     asset_data = asset['data']
     asset_data.update(data)
@@ -58,7 +58,7 @@ def update_asset_data(asset_id, data: dict):
 
 def update_shot_data(shot_id, data: dict):
     shot = shots_service.get_shot(shot_id)
-    if shot['data'] == None:
+    if shot['data'] is None:
         shot['data'] = {}
     shot_data = shot['data']
     shot_data.update(data)
@@ -66,6 +66,28 @@ def update_shot_data(shot_id, data: dict):
 
     shot_raw = shots_service.get_shot_raw(shot_id)
     shot_raw.update(updated_shot_data)
+
+def update_sequence_data(sequence_id, data: dict):
+    sequence = shots_service.get_sequence(sequence_id)
+    if sequence['data'] is None:
+        sequence['data'] = {}
+    sequence_data = sequence['data']
+    sequence_data.update(data)
+    updated_sequence_data = {'data': sequence_data}
+
+    sequence_raw = shots_service.get_sequence_raw(sequence_id)
+    sequence_raw.update(updated_sequence_data)
+
+def update_episode_data(episode_id, data: dict):
+    episode = shots_service.get_sequence(episode_id)
+    if episode['data'] is None:
+        episode['data'] = {}
+    episode_data = episode['data']
+    episode_data.update(data)
+    updated_episode_data = {'data': episode_data}
+
+    episode_raw = shots_service.get_episode_raw(episode_id)
+    episode_raw.update(updated_episode_data)
 
 def get_svn_base_directory(project:dict, base_file_directory):
     '''
