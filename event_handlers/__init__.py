@@ -16,6 +16,10 @@ from . import (
     task_unassign,
     task_status,
     comment_new,
+    shot_casting_update,
+    asset_casting_update,
+    entity_link_new,
+    entity_link_update,
     )
 
 event_map = {
@@ -36,4 +40,8 @@ event_map = {
     "task:unassign":task_unassign,
     "task:status-changed":task_status,
     "comment:new":comment_new,
+    "shot:casting-update":shot_casting_update,
+    "asset:casting-update": asset_casting_update,
+    "entity-link:new": entity_link_new,
+    "entity-link:update": entity_link_update,
 }
