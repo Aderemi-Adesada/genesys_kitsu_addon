@@ -263,59 +263,69 @@ def send_comment_notification(person_login_name, task, text, author_name):
     message = f':kitsu: *{author_name}* made a comment on <{task_url}|{task_name}> - "{text}".'
     send_message_to_rc(message, person_login_name)
 
-def set_acl(task, person, permission, task_type, base_svn_directory, dependencies, project, working_file_path):
-    project_name = slugify(project['name'], separator='_')
+def set_acl(task, person, permission, task_type, dependencies, project):
+    genesys_task = requests.get(
+        url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks",
+        params={"secondary_id": task['id']}, timeout=5).json()[0]
+    genesys_task_id = genesys_task['id']
+
     project_id = project['id']
     task_type_name = slugify(task_type['name'], separator='_')
     dependencies_payload = list()
     for dependency in dependencies:
-        task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
-        dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
-        dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')[0]
-        dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-        dependencies_payload.append(dependency_base_svn_directory)
+        dependency_task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
+        try:
+            genesys_dependency_task = requests.get(
+                url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks",
+                params={"secondary_id": dependency_task_id}, timeout=5).json()[0]
+        except IndexError:
+            continue
+        genesys_dependency_task_id = genesys_dependency_task['id']
+        dependencies_payload.append(genesys_dependency_task_id)
+
         entity = entities_service.get_entity_raw(dependency['id'])
         dependencies_of_dependency = Entity.serialize_list(entity.entities_out, obj_type="Asset")
         for dependency_of_dependency in dependencies_of_dependency:
             dependency_of_dependency_task_id = tasks_service.get_tasks_for_asset(dependency_of_dependency['id'])[0]
-            dependency_of_dependency_working_file_path = file_tree_service.get_working_file_path(dependency_of_dependency_task_id)
-            dependency_of_dependency_base_file_directory = get_base_file_directory(project, dependency_of_dependency_working_file_path, 'base')[0]
-            dependency_of_dependency_base_svn_directory = get_svn_base_directory(project, dependency_of_dependency_base_file_directory)
-            dependencies_payload.append(dependency_of_dependency_base_svn_directory)
+            try:
+                genesys_dependency_of_dependency_task = requests.get(
+                    url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks",
+                    params={"secondary_id": dependency_of_dependency_task_id}, timeout=5).json()[0]
+            except IndexError:
+                continue
+            genesys_dependency_of_dependency_task_id = genesys_dependency_of_dependency_task['id']
+            dependencies_payload.append(genesys_dependency_of_dependency_task_id)
+    
     #TODO implement DRY
     project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
     if task_type_name in project_shot_task_types:
+        all_shot_task = tasks_service.get_tasks_for_shot(task['entity_id'])
         if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
-            for shot_task_type in project_shot_task_types:
-                if shot_task_type.lower() in {'sound', 'storyboard', 'keying'}:
+            for shot_task in all_shot_task:
+                if shot_task['task_type_name'].lower() in {'sound', 'storyboard', 'keying'}:
                     continue
-                if task_type_name != shot_task_type:
-                    task_type_map = shot_task_type
-                    dependency_working_file_path = file_tree_service.get_working_file_path(task)
-                    dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
-                    if dependency_base_file_directories:
-                        for dependency_base_file_directory in dependency_base_file_directories:
-                            dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                            dependencies_payload.append(dependency_base_svn_directory)
+                if task_type_name.lower() != shot_task['task_type_name'].lower():
+                    genesys_shot_task = requests.get(
+                        url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks",
+                        params={"secondary_id": shot_task['id']}, timeout=5).json()[0]
+                    genesys_shot_task_id = genesys_shot_task['id']
+                    dependencies_payload.append(genesys_shot_task_id)
     
     project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
     if task_type_name in project_asset_task_types:
-        for asset_task_type in project_asset_task_types:
-            if task_type_name != asset_task_type:
-                task_type_map = asset_task_type
-                dependency_working_file_path = file_tree_service.get_working_file_path(task)
-                dependency_base_file_directories = get_base_file_directory(project, dependency_working_file_path, task_type_map)
-                if dependency_base_file_directories:
-                    for dependency_base_file_directory in dependency_base_file_directories:
-                        dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                        dependencies_payload.append(dependency_base_svn_directory)
+        all_asset_task = tasks_service.get_tasks_for_asset(task['entity_id'])
+        for asset_task in all_asset_task:
+            if task_type_name.lower() != asset_task['task_type_name'].lower():
+                genesys_asset_task = requests.get(
+                    url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/tasks",
+                    params={"secondary_id": asset_task['id']}, timeout=5).json()[0]
+                genesys_asset_task_id = genesys_asset_task['id']
+                dependencies_payload.append(genesys_asset_task_id)
+    
     payload = {
-        'task': task,
-        'base_svn_directory':base_svn_directory,
-        "task_type":task_type['name'].lower(),
-        'person':person,
+        'task_id': genesys_task_id,
+        'user':person[LOGIN_NAME],
         'permission': permission,
-        'dependencies': dependencies_payload,
-        "main_file_name": os.path.basename(working_file_path),
+        'dependent_tasks': dependencies_payload
     }
-    requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
+    requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/acl", json=payload)

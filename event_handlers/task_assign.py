@@ -50,8 +50,6 @@ def handle_event(data):
                 person=person,
                 permission='rw', 
                 task_type=task_type,
-                base_svn_directory=base_svn_directory,
                 dependencies=dependencies,
-                project=project,
-                working_file_path=working_file_path)
+                project=project,)
             send_assignation_notification(person[LOGIN_NAME], task)
