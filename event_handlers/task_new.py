@@ -30,7 +30,7 @@ def handle_event(data):
         "name": genesys_task['name'],
         "task_id": genesys_task['id'],
         "software": "blender",
-        "software_version": "3.02",
+        "software_version": "2.80",
     }
     requests.post(url=f"{GENESIS_HOST}:{GENESIS_PORT}/data/files", json=file_payload, timeout=5)
 
