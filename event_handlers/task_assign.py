@@ -11,7 +11,7 @@ from zou.app.services import (
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
-from .utils import send_assignation_notification, set_acl, with_app_context
+from .utils import send_assignation_notification, get_full_task, set_acl, with_app_context
 
 @with_app_context
 def handle_event(data):

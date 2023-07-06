@@ -9,7 +9,7 @@ from zou.app.services import (
                                 tasks_service,
                                 entities_service
                             )
-from .utils import get_base_file_directory, get_svn_base_directory, set_acl, with_app_context
+from .utils import get_base_file_directory, get_svn_base_directory, get_full_task, set_acl, with_app_context
 from zou.app.models.entity import Entity
 
 @with_app_context
@@ -20,7 +20,7 @@ def handle_event(data):
     person = persons_service.get_person(person_id)
     task_id = data['task_id']
     # task = tasks_service.get_task(task_id)
-    task = tasks_service.get_full_task(data['task_id'])
+    task = get_full_task(data['task_id'])
 
     project_name = slugify(project['name'], separator="_")
 

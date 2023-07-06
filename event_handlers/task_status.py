@@ -5,12 +5,12 @@ from zou.app.services import (
                                 tasks_service,
                             )
 from .config import LOGIN_NAME
-from .utils import send_status_notification, with_app_context
+from .utils import send_status_notification, get_full_task, with_app_context
 
 @with_app_context
 def handle_event(data):
     all_persons = persons_service.get_persons()
-    task = tasks_service.get_full_task(data['task_id'])
+    task = get_full_task(data['task_id'])
     task_departmet_id = task['task_type']['department_id']
 
     new_task_status_id = data['new_task_status_id']

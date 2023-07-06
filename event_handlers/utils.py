@@ -146,6 +146,50 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
         }
         payload.append(task_payload)
 
+@cache.memoize_function(120)
+def get_full_task(task_id):
+    task = tasks_service.get_task_with_relations(task_id)
+    task_type = tasks_service.get_task_type(task["task_type_id"])
+    project = projects_service.get_project(task["project_id"])
+    task_status = tasks_service.get_task_status(task["task_status_id"])
+    entity = entities_service.get_entity(task["entity_id"])
+    entity_type = entities_service.get_entity_type(entity["entity_type_id"])
+    assignees = [
+        persons_service.get_person(assignee_id)
+        for assignee_id in task["assignees"]
+    ]
+
+    task.update(
+        {
+            "entity": entity,
+            "entity_type": entity_type,
+            "persons": assignees,
+            "project": project,
+            "task_status": task_status,
+            "task_type": task_type,
+            "type": "Task",
+        }
+    )
+
+    try:
+        assigner = persons_service.get_person(task["assigner_id"])
+        task["assigner"] = assigner
+    except PersonNotFoundException:
+        pass
+
+    if entity["parent_id"] is not None:
+        if entity_type["name"] not in ["Asset", "Shot"]:
+            episode_id = entity["parent_id"]
+        else:
+            sequence = shots_service.get_sequence(entity["parent_id"])
+            task["sequence"] = sequence
+            episode_id = sequence["parent_id"]
+        if episode_id is not None:
+            episode = shots_service.get_episode(episode_id)
+            task["episode"] = episode
+
+    return task
+
 def send_message_to_rc(message, recipient):
     if USE_ROCKET_CHAT_BOT:
         try:
