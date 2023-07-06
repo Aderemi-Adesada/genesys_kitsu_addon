@@ -11,8 +11,9 @@ from zou.app.services import (
                             )
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
-from .utils import get_full_task, send_assignation_notification, set_acl
+from .utils import send_assignation_notification, set_acl, with_app_context
 
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     project = projects_service.get_project(project_id)
@@ -20,7 +21,7 @@ def handle_event(data):
     person = persons_service.get_person(person_id)
     task_id = data['task_id']
     # task = tasks_service.get_task(task_id)
-    task = get_full_task(data['task_id'])
+    task = tasks_service.get_full_task(data['task_id'])
 
     project_name = slugify(project['name'], separator='_')
 

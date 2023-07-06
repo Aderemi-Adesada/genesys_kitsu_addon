@@ -8,8 +8,9 @@ from zou.app.services import (
                                 projects_service,
                                 tasks_service,
                             )
-from .utils import get_base_file_directory, get_svn_base_directory, get_full_task
+from .utils import get_base_file_directory, get_svn_base_directory, with_app_context
 
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     project = projects_service.get_project(project_id)
@@ -18,7 +19,7 @@ def handle_event(data):
     project_file_name = slugify(project_name, separator="_")
 
     # task = tasks_service.get_task(data['task_id'])
-    task = get_full_task(data['task_id'])
+    task = tasks_service.get_full_task(data['task_id'])
     task_type = tasks_service.get_task_type(task['task_type_id'])
     task_type_name = task_type['name'].lower()
     working_file_path = file_tree_service.get_working_file_path(task)

@@ -7,12 +7,13 @@ from zou.app.services import (
                                 comments_service,
                             )
 from .config import LOGIN_NAME
-from .utils import send_comment_notification, get_full_task
+from .utils import send_comment_notification, with_app_context
 
+@with_app_context
 def handle_event(data):
     comment_id = data['comment_id']
     all_persons = persons_service.get_persons()
-    task = get_full_task(data['task_id'])
+    task = tasks_service.get_full_task(data['task_id'])
     task_departmet_id = task['task_type']['department_id']
     comment = tasks_service.get_comment_raw(comment_id).serialize()
     text = comment['text']

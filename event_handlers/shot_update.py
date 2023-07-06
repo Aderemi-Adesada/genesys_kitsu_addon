@@ -7,8 +7,9 @@ from zou.app.services import (
                                 projects_service,
                                 shots_service,
                             )
-from .utils import rename_task_file, update_shot_data
+from .utils import rename_task_file, update_shot_data, with_app_context
 
+@with_app_context
 def handle_event(data):
     project_id = data['project_id']
     shot_id = data['shot_id']
