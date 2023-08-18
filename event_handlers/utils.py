@@ -230,9 +230,24 @@ def send_comment_notification(person_login_name, task, text, author_name):
     send_message_to_rc(message, person_login_name)
 
 def set_acl(task, person, permission, task_type, base_svn_directory, dependencies, project, working_file_path):
+    files = []
+    files.append(base_svn_directory)
+    for_entity = task["task_type"]["for_entity"]
+    main_file_name = os.path.basename(working_file_path)
+
+    splited_file_map_folder_url = base_svn_directory.split(':', 1)
+    base_file_directory = f"{splited_file_map_folder_url[0]}{splited_file_map_folder_url[1]}"
+    file_name = os.path.basename(base_file_directory).rsplit('.', 1)[0]
+
+    if for_entity.lower() == "asset":
+        base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', main_file_name)
+    else:
+        base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', file_name)
+
     project_name = slugify(project['name'], separator='_')
     project_id = project['id']
     task_type_name = slugify(task_type['name'], separator='_')
+    files.append(base_map_svn_directory)
     dependencies_payload = list()
     for dependency in dependencies:
         task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
@@ -240,6 +255,12 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
         dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')[0]
         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
         dependencies_payload.append(dependency_base_svn_directory)
+
+        dependency_main_file_name = os.path.basename(dependency_working_file_path)
+        dependency_base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', dependency_main_file_name)
+        if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
+            dependencies_payload.append(dependency_base_map_svn_directory)
+
         entity = entities_service.get_entity_raw(dependency['id'])
         dependencies_of_dependency = Entity.serialize_list(entity.entities_out, obj_type="Asset")
         for dependency_of_dependency in dependencies_of_dependency:
@@ -248,6 +269,11 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
             dependency_of_dependency_base_file_directory = get_base_file_directory(project, dependency_of_dependency_working_file_path, 'base')[0]
             dependency_of_dependency_base_svn_directory = get_svn_base_directory(project, dependency_of_dependency_base_file_directory)
             dependencies_payload.append(dependency_of_dependency_base_svn_directory)
+
+            dependency_of_dependency_main_file_name = os.path.basename(dependency_of_dependency_working_file_path)
+            dependency_of_dependency_base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', dependency_of_dependency_main_file_name)
+            if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
+                dependencies_payload.append(dependency_of_dependency_base_map_svn_directory)
     #TODO implement DRY
     project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
     if task_type_name in project_shot_task_types:
@@ -276,12 +302,9 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
                         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
                         dependencies_payload.append(dependency_base_svn_directory)
     payload = {
-        'task': task,
-        'base_svn_directory':base_svn_directory,
-        "task_type":task_type['name'].lower(),
-        'person':person,
+        'files': files,
+        'person':person[LOGIN_NAME],
         'permission': permission,
         'dependencies': dependencies_payload,
-        "main_file_name": os.path.basename(working_file_path),
     }
     requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
