@@ -142,7 +142,6 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
             'new_base_svn_directory':new_base_svn_directory,
             'base_file_directory':base_file_directory,
             'new_base_file_directory':new_base_file_directory,
-            'task_type':task_type_name,
         }
         payload.append(task_payload)
 
@@ -257,7 +256,7 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
         dependencies_payload.append(dependency_base_svn_directory)
 
         dependency_main_file_name = os.path.basename(dependency_working_file_path)
-        dependency_base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', dependency_main_file_name)
+        dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_base_svn_directory), 'maps', dependency_main_file_name)
         if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
             dependencies_payload.append(dependency_base_map_svn_directory)
 
@@ -271,7 +270,7 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
             dependencies_payload.append(dependency_of_dependency_base_svn_directory)
 
             dependency_of_dependency_main_file_name = os.path.basename(dependency_of_dependency_working_file_path)
-            dependency_of_dependency_base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', dependency_of_dependency_main_file_name)
+            dependency_of_dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_of_dependency_base_svn_directory), 'maps', dependency_of_dependency_main_file_name)
             if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
                 dependencies_payload.append(dependency_of_dependency_base_map_svn_directory)
     #TODO implement DRY
