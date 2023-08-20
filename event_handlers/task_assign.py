@@ -25,6 +25,7 @@ def handle_event(data):
     task_raw.assignees.clear()
     person_raw = persons_service.get_person_raw(person_id)
     task_raw.assignees.append(person_raw)
+    task_raw.save()
     tasks_service.clear_task_cache(task_id)
 
     task = get_full_task(data['task_id'])
