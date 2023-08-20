@@ -22,7 +22,7 @@ def handle_event(data):
     task_id = data['task_id']
     # task = tasks_service.get_task(task_id)
     task_raw = tasks_service.get_task_raw(task_id)
-    assignees = [person]
+    assignees = [person_id]
     task_raw.update({"assignees": assignees})
     tasks_service.clear_task_cache(task_id)
 
