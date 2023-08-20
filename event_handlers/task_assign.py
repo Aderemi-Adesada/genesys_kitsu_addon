@@ -12,6 +12,7 @@ from zou.app.services import (
 from .utils import get_base_file_directory, get_svn_base_directory
 from zou.app.models.entity import Entity
 from .utils import send_assignation_notification, get_full_task, set_acl, with_app_context
+from zou.app.utils import events
 
 @with_app_context
 def handle_event(data):
@@ -22,10 +23,19 @@ def handle_event(data):
     task_id = data['task_id']
     # task = tasks_service.get_task(task_id)
     task_raw = tasks_service.get_task_raw(task_id)
+    removed_assignments = [person.serialize() for person in task_raw.assignees]
+
     task_raw.assignees.clear()
     person_raw = persons_service.get_person_raw(person_id)
     task_raw.assignees.append(person_raw)
     task_raw.save()
+
+    for assignee in removed_assignments:
+        events.emit(
+            "task:unassign",
+            {"person_id": assignee["id"], "task_id": task_id},
+            project_id=project_id,
+        )
     tasks_service.clear_task_cache(task_id)
 
     task = get_full_task(data['task_id'])
