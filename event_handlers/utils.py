@@ -113,6 +113,7 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
     task_type = tasks_service.get_task_type(task['task_type_id'])
     task_type_name = task_type['name'].lower()
     # FIXME working file path different from new entity name when task is renamed
+    root = os.path.join(project['file_tree']['working']['mountpoint'], project['file_tree']['working']['root'], '')
 
     if entity_type == 'asset':
         # set working file path to previous name
@@ -133,13 +134,15 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
     base_file_directory = get_base_file_directory(project, working_file_path, task_type_name)
     new_base_file_directory = get_base_file_directory(project, new_working_file_path, task_type_name)
     if base_file_directory:
-        base_svn_directory = get_svn_base_directory(project, base_file_directory)
-        new_base_svn_directory = get_svn_base_directory(project, new_base_file_directory)
+        acl_path = get_svn_base_directory(project, base_file_directory)
+        new_acl_path = get_svn_base_directory(project, new_base_file_directory)
+
+        # replacing file tree mount point with genesys config mount point
+        base_file_directory = base_file_directory.split(root,1)[1]
+        new_base_file_directory = new_base_file_directory.split(root,1)[1]
         task_payload = {
-            'entity_type':entity_type,
-            'project':project,
-            'base_svn_directory':base_svn_directory,
-            'new_base_svn_directory':new_base_svn_directory,
+            'acl_path':acl_path,
+            'new_acl_path':new_acl_path,
             'base_file_directory':base_file_directory,
             'new_base_file_directory':new_base_file_directory,
         }
@@ -228,37 +231,37 @@ def send_comment_notification(person_login_name, task, text, author_name):
     message = f':kitsu: *{author_name}* made a comment on <{task_url}|{task_name}> - "{text}".'
     send_message_to_rc(message, person_login_name)
 
-def set_acl(task, person, permission, task_type, base_svn_directory, dependencies, project, working_file_path):
-    files = []
-    files.append(base_svn_directory)
+def set_acl(task, person, permission, task_type, acl_path, dependencies, project, working_file_path):
+    acl_paths = []
+    acl_paths.append(acl_path)
     for_entity = task["task_type"]["for_entity"]
     main_file_name = os.path.basename(working_file_path)
 
-    splited_file_map_folder_url = base_svn_directory.split(':', 1)
+    splited_file_map_folder_url = acl_path.split(':', 1)
     base_file_directory = f"{splited_file_map_folder_url[0]}{splited_file_map_folder_url[1]}"
     file_name = os.path.basename(base_file_directory).rsplit('.', 1)[0]
 
     if for_entity.lower() == "asset":
-        base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', main_file_name)
+        base_map_svn_directory = os.path.join(os.path.dirname(acl_path), 'maps', main_file_name)
     else:
-        base_map_svn_directory = os.path.join(os.path.dirname(base_svn_directory), 'maps', file_name)
+        base_map_svn_directory = os.path.join(os.path.dirname(acl_path), 'maps', file_name)
 
     project_name = slugify(project['name'], separator='_')
     project_id = project['id']
     task_type_name = slugify(task_type['name'], separator='_')
-    files.append(base_map_svn_directory)
-    dependencies_payload = list()
+    acl_paths.append(base_map_svn_directory)
+    acl_paths_dependencies = list()
     for dependency in dependencies:
         task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
         dependency_working_file_path = file_tree_service.get_working_file_path(task_id)
         dependency_base_file_directory = get_base_file_directory(project, dependency_working_file_path, 'base')[0]
         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-        dependencies_payload.append(dependency_base_svn_directory)
+        acl_paths_dependencies.append(dependency_base_svn_directory)
 
         dependency_main_file_name = os.path.basename(dependency_working_file_path)
         dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_base_svn_directory), 'maps', dependency_main_file_name)
         if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
-            dependencies_payload.append(dependency_base_map_svn_directory)
+            acl_paths_dependencies.append(dependency_base_map_svn_directory)
 
         entity = entities_service.get_entity_raw(dependency['id'])
         dependencies_of_dependency = Entity.serialize_list(entity.entities_out, obj_type="Asset")
@@ -267,12 +270,12 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
             dependency_of_dependency_working_file_path = file_tree_service.get_working_file_path(dependency_of_dependency_task_id)
             dependency_of_dependency_base_file_directory = get_base_file_directory(project, dependency_of_dependency_working_file_path, 'base')[0]
             dependency_of_dependency_base_svn_directory = get_svn_base_directory(project, dependency_of_dependency_base_file_directory)
-            dependencies_payload.append(dependency_of_dependency_base_svn_directory)
+            acl_paths_dependencies.append(dependency_of_dependency_base_svn_directory)
 
             dependency_of_dependency_main_file_name = os.path.basename(dependency_of_dependency_working_file_path)
             dependency_of_dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_of_dependency_base_svn_directory), 'maps', dependency_of_dependency_main_file_name)
             if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
-                dependencies_payload.append(dependency_of_dependency_base_map_svn_directory)
+                acl_paths_dependencies.append(dependency_of_dependency_base_map_svn_directory)
     #TODO implement DRY
     project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
     if task_type_name in project_shot_task_types:
@@ -287,7 +290,7 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
                     if dependency_base_file_directories:
                         for dependency_base_file_directory in dependency_base_file_directories:
                             dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                            dependencies_payload.append(dependency_base_svn_directory)
+                            acl_paths_dependencies.append(dependency_base_svn_directory)
     
     project_asset_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Asset"}
     if task_type_name in project_asset_task_types:
@@ -299,11 +302,11 @@ def set_acl(task, person, permission, task_type, base_svn_directory, dependencie
                 if dependency_base_file_directories:
                     for dependency_base_file_directory in dependency_base_file_directories:
                         dependency_base_svn_directory = get_svn_base_directory(project, dependency_base_file_directory)
-                        dependencies_payload.append(dependency_base_svn_directory)
+                        acl_paths_dependencies.append(dependency_base_svn_directory)
     payload = {
-        'files': files,
+        'acl_paths': acl_paths,
         'person':person[LOGIN_NAME],
         'permission': permission,
-        'dependencies': dependencies_payload,
+        'acl_paths_dependencies': acl_paths_dependencies,
     }
     requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)

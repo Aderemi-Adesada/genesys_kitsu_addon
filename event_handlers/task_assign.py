@@ -45,13 +45,13 @@ def handle_event(data):
         base_file_directories = get_base_file_directory(project, working_file_path, task_type_name)
     if base_file_directories:
         for base_file_directory in base_file_directories:
-            base_svn_directory = get_svn_base_directory(project, base_file_directory)
+            acl_path = get_svn_base_directory(project, base_file_directory)
             set_acl(
                 task=task,
                 person=person,
                 permission='rw', 
                 task_type=task_type,
-                base_svn_directory=base_svn_directory,
+                acl_path=acl_path,
                 dependencies=dependencies,
                 project=project,
                 working_file_path=working_file_path)
