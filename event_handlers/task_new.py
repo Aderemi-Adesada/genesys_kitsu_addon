@@ -56,6 +56,7 @@ def handle_event(data):
             root = os.path.join(project['file_tree']['working']['mountpoint'], project['file_tree']['working']['root'],'')
             # replacing file tree mount point with genesys config mount point
             base_file_directory = base_file_directory.split(root,1)[1]
+            base_file_maps_directory = base_file_maps_directory.split(root,1)[1]
 
             payload = {
                     "base_file_directory":base_file_directory,
