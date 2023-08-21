@@ -21,8 +21,28 @@ def handle_event(data):
     person_id = data['person_id']
     person = persons_service.get_person(person_id)
     task_id = data['task_id']
-    # task = tasks_service.get_task(task_id)
+
+    task_raw = tasks_service.get_task_raw(data['task_id'])
+    task_status_id = task_raw.task_status_id
+    task_status_name = tasks_service.get_task_status(task_status_id)['name'].lower()
+    if task_status_name in {'done'}:
+        removed_assignments = [person.serialize() for person in task_raw.assignees]
+        task_raw.assignees.clear()
+        task_raw.save()
+
+        for assignee in removed_assignments:
+            events.emit(
+                "task:unassign",
+                {"person_id": assignee["id"], "task_id": data['task_id']},
+                project_id=project_id,
+            )
+        events.emit("task:update", {"task_id": data['task_id']}, project_id=project_id)
+        tasks_service.clear_task_cache(data['task_id'])
+        return
+
     task_raw = tasks_service.get_task_raw(task_id)
+    #print all attributes of task_raw
+    print(dir(task_raw))
     removed_assignments = [person.serialize() for person in task_raw.assignees if str(person.id) != person_id]
 
     task_raw.assignees.clear()
