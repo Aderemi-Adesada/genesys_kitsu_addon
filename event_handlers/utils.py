@@ -250,6 +250,7 @@ def set_acl(task, person, permission, task_type, acl_path, dependencies, project
     project_id = project['id']
     task_type_name = slugify(task_type['name'], separator='_')
     acl_paths.append(base_map_svn_directory)
+    acl_paths.append(f"{base_map_svn_directory}/**")
     acl_paths_dependencies = list()
     for dependency in dependencies:
         task_id = tasks_service.get_tasks_for_asset(dependency['id'])[0]
@@ -262,6 +263,7 @@ def set_acl(task, person, permission, task_type, acl_path, dependencies, project
         dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_base_svn_directory), 'maps', dependency_main_file_name)
         if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
             acl_paths_dependencies.append(dependency_base_map_svn_directory)
+            acl_paths_dependencies.append(f"{dependency_base_map_svn_directory}/**")
 
         entity = entities_service.get_entity_raw(dependency['id'])
         dependencies_of_dependency = Entity.serialize_list(entity.entities_out, obj_type="Asset")
@@ -276,6 +278,7 @@ def set_acl(task, person, permission, task_type, acl_path, dependencies, project
             dependency_of_dependency_base_map_svn_directory = os.path.join(os.path.dirname(dependency_of_dependency_base_svn_directory), 'maps', dependency_of_dependency_main_file_name)
             if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
                 acl_paths_dependencies.append(dependency_of_dependency_base_map_svn_directory)
+                acl_paths_dependencies.append(f"{dependency_of_dependency_base_map_svn_directory}/**")
     #TODO implement DRY
     project_shot_task_types = {slugify(i['name'], separator='_') for i in tasks_service.get_task_types_for_project(project_id) if i['for_entity']=="Shot"}
     if task_type_name in project_shot_task_types:
