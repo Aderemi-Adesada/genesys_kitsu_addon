@@ -41,8 +41,6 @@ def handle_event(data):
         return
 
     task_raw = tasks_service.get_task_raw(task_id)
-    #print all attributes of task_raw
-    print(dir(task_raw))
     removed_assignments = [person.serialize() for person in task_raw.assignees if str(person.id) != person_id]
 
     task_raw.assignees.clear()
