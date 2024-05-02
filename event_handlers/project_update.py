@@ -1,4 +1,3 @@
-from gazu.project import new_project
 from .config import GENESIS_HOST, GENESIS_PORT, SVN_SERVER_PARENT_URL
 import requests
 import json

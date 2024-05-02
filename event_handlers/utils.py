@@ -21,6 +21,13 @@ from requests import sessions
 import requests
 from .config import GENESIS_PORT, GENESIS_HOST, LOGIN_NAME
 from zou.app.models.entity import Entity
+import os
+import requests
+import re
+from concurrent.futures import ThreadPoolExecutor
+import json
+from threading import Lock
+from pathlib import Path
 
 def with_app_context(func):
     @wraps(func)
@@ -313,3 +320,225 @@ def set_acl(task, person, permission, task_type, acl_path, dependencies, project
         'acl_paths_dependencies': acl_paths_dependencies,
     }
     requests.put(url=f"{GENESIS_HOST}:{GENESIS_PORT}/task_acl/{project_name}", json=payload)
+
+
+################################ reset ####################################
+def get_file_map(project: dict) -> dict:
+    try:
+        return project['data']['file_map']
+    except KeyError:
+        return FILE_MAP
+
+def get_task_type_extension(task_type_name: str, file_map: dict):
+    if task_type_name.lower() in {'editing', 'edit'}:
+        return 'blend'
+    try:
+        return file_map[task_type_name.lower()]['softwares'][0]['extension']
+    except KeyError:
+        return 'blend'
+    
+def get_task_type_suffix(task_type_name: str, file_map: dict):
+    if task_type_name.lower() in {'editing', 'edit'}:
+        return None
+    try:
+        suffix = file_map[task_type_name.lower()]['file']
+        if suffix in {'none', 'base'}:
+            return None
+        return suffix
+    except KeyError:
+        return None
+
+def get_asset_file_path(
+        project_name: str, 
+        entity_name: str, 
+        entity_type: str, 
+        extension: str,
+        suffix: str = None,
+        ) -> Path:
+    project_name = slugify(project_name)
+    entity_name = slugify(entity_name)
+    entity_type = slugify(entity_type)
+    assets_root = Path(f"{project_name}/lib")
+    if suffix:
+        asset_path = assets_root / entity_type / f"{entity_name}_{suffix}.{extension}"
+    else:
+        asset_path = assets_root / entity_type / f"{entity_name}.{extension}"
+    return asset_path
+
+def get_shot_file_path(
+    project_name: str,
+    entity_name: str,
+    extension: str,
+    sequence_name: str = None,
+    episode_name: str = None,
+    suffix: str = None,
+    ) -> Path:
+    project_name = slugify(project_name)
+    entity_name = slugify(entity_name)
+    shots_root = Path(f"{project_name}/scenes")
+    shot_parents = []
+    shot_name_parts = []
+    if episode_name:
+        episode_name = slugify(episode_name)
+        shot_parents.append(episode_name)
+    if sequence_name:
+        sequence_name = slugify(sequence_name)
+        shot_parents.append(sequence_name)
+        shot_name_parts.append(sequence_name)
+    shot_parents.append(entity_name)
+    shot_name_parts.append(entity_name)
+    if suffix:
+        #shot name is the combination of parants, entity name and suffix
+        # shot_name = "_".join(shot_parents) + "_" + suffix
+        shot_name = "_".join(shot_name_parts) + "_" + suffix
+        shot_path = shots_root / "/".join(shot_parents) / f"{shot_name}.{extension}"
+    else:
+        # shot_name = "_".join(shot_parents)
+        shot_name = "_".join(shot_name_parts)
+        shot_path = shots_root / "/".join(shot_parents) / shot_name
+    return shot_path
+
+def get_acl_path(project_name: str, file_path: Path) -> Path:
+    '''
+        get svn repository acl directory
+    '''
+    project_name = slugify(project_name)
+    acl_path = Path(f"{project_name}:",file_path.as_posix().split(f"{project_name}/", 1)[1])
+    return acl_path
+
+def add_dependencies_to_payload(payload: list, dependencies, task_type_name: str, project: dict):
+    for dependency in dependencies:
+        dependency_task = dependency['task']
+        dependency_entity_name = dependency_task['entity']['name']
+        dependency_entity_type_name = dependency_task['entity_type']['name']
+        dependency_file_path = get_asset_file_path(project['name'], dependency_entity_name, dependency_entity_type_name, 'blend')
+        dependency_acl_path = get_acl_path(project['name'], dependency_file_path)
+        dependency_maps_acl_path = Path(dependency_acl_path.parent, 'maps', os.path.splitext(dependency_acl_path.name)[0])
+        payload.append(dependency_acl_path.as_posix())
+        if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
+            payload.append(dependency_maps_acl_path.as_posix())
+            payload.append(f":glob:{dependency_maps_acl_path.as_posix()}/**")
+
+def reset_acl(
+        project_id,
+        genesys_host,  
+        ignored_task_types = {'storyboard', 'keying', 'rendering', 'compositing', 'concept', 'layout', 'sound'},
+        ignored_task_status = {'done', 'na', 'todo'},
+        use_ignore_list = False,
+        ):
+    payloads = []
+    project = projects_service.get_project(project_id)
+    project_name = project['name']
+
+    project_task_types = tasks_service.get_task_types_for_project(project_id)
+    project_task_statuses = projects_service.get_project_task_statuses(project_id)
+    project_task_type_dict = {task_type['id']: task_type for task_type in project_task_types}
+    project_task_status_dict = {task_status['id']: task_status for task_status in project_task_statuses}
+    project_name = slugify(project['name'], separator='_')
+    file_map = get_file_map(project)
+    all_project_task = tasks_service.get_tasks_for_project(project_id)
+    all_used_project_task = []
+    for task in all_project_task:
+        try:
+            task_type_name = project_task_type_dict[task['task_type_id']]['name'].lower()
+            task_status_name = project_task_status_dict[task['task_status_id']]['short_name'].lower()
+        except KeyError:
+            print(f"task {task['id']} has no task type or task status")
+            task_type_name = 'none'
+            task_status_name = 'none'
+        if use_ignore_list:
+            if task_type_name in ignored_task_types or task_status_name in ignored_task_status or not task['assignees']:
+                continue
+        all_used_project_task.append(task)
+    all_project_task_full = []
+
+    with ThreadPoolExecutor() as executor:
+        for task_data in executor.map(get_full_task, all_used_project_task):
+            all_project_task_full.append(task_data)
+        
+    all_project_task_full.set_description(f"reseting acl for project {project_name}")
+    for task in all_project_task_full:
+        acl_paths = []
+        task_type_name = task['task_type']['name'].lower()
+        persons = [person['desktop_login'] for person in task['persons']]
+        for_entity = task["task_type"]["for_entity"]
+        entity_name = task['entity']['name']
+
+        extension = get_task_type_extension(task_type_name, file_map)
+        suffix = get_task_type_suffix(task_type_name, file_map)
+        dependencies = task['dependencies']
+        if task_type_name in {'editing', 'edit'}:
+            dependencies = []
+            if production_type != 'tvshow':
+                file_path = Path(project_name,'edit','edit.blend')
+            else:
+                episode_name = slugify(task['episode']['name'], separator="_")
+                file_path = Path(project_name,'edit',f"{episode_name}_edit.blend")
+        elif for_entity.lower() == "asset":
+            file_path = get_asset_file_path(project_name, entity_name, task['entity_type']['name'], extension, suffix)
+        else:
+            episode_name = None
+            sequence_name = None
+            if task.get('episode'):
+                episode_name = task['episode']['name']
+            if task.get('sequence'):
+                sequence_name = task['sequence']['name']
+            file_path = get_shot_file_path(
+                project_name, entity_name, extension, 
+                sequence_name, episode_name, suffix
+                )
+
+        main_file_name = slugify(entity_name)
+        production_type = task['project']['production_type']
+
+
+        if file_path:
+            file_name = os.path.splitext(file_path.name)[0]
+            file_acl_path = get_acl_path(project_name, file_path)
+            acl_paths.append(file_acl_path.as_posix())
+            if for_entity.lower() == "asset":
+                file_maps_path = Path(file_path.parent, 'maps', main_file_name)
+                file_maps_acl_path = get_acl_path(project_name, file_maps_path)
+                collection_name = main_file_name
+            else:
+                file_maps_path = Path(file_path.parent, 'maps', file_name)
+                file_maps_acl_path = get_acl_path(project_name, file_maps_path)
+                collection_name = file_name
+            acl_paths.append(file_maps_acl_path.as_posix())
+            acl_paths.append(f":glob:{file_maps_acl_path.as_posix()}/**")
+
+            acl_paths_dependencies_payload = list()
+            add_dependencies_to_payload(acl_paths_dependencies_payload, dependencies, task_type_name, project)
+            for dependency in dependencies:
+                add_dependencies_to_payload(acl_paths_dependencies_payload, dependency['dependencies'], task_type_name, project)
+
+            project_shot_task_types = {slugify(i['name'], separator='_') for i in project_task_types if i['for_entity']=="Shot"}
+            if task_type_name in project_shot_task_types:
+                if task_type_name.lower() not in {'anim', 'animation', 'sound', 'storyboard', 'keying'}:
+                    for shot_task_type in project_shot_task_types:
+                        if shot_task_type.lower() in {'sound', 'storyboard', 'keying'}:
+                            continue
+                        if task_type_name != shot_task_type:
+                            dependency_file_acl_path = file_acl_path.as_posix().replace(f"_{task_type_name}", f"_{shot_task_type}")
+                            acl_paths_dependencies_payload.append(dependency_file_acl_path)
+            payload = {
+                'acl_paths': acl_paths,
+                'persons':persons,
+                'permission': 'rw',
+                'acl_paths_dependencies': acl_paths_dependencies_payload,
+
+                'base_file_directory': file_path.as_posix(),
+                'base_file_map_directory': file_maps_path.as_posix(),
+                'file_acl_path': file_acl_path.as_posix(),
+                'file_maps_acl_path': file_maps_acl_path.as_posix(),
+                'collection_name': collection_name,
+            }
+            payloads.append(payload)
+
+    json_object = json.dumps(payloads, indent=4)
+
+    with open("sample_2.json", "w") as outfile:
+        outfile.write(json_object)
+
+    result = requests.post(url=f"{genesys_host}/refresh/{project_name}", json=payloads)
+    print(result)
