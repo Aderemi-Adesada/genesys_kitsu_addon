@@ -156,7 +156,6 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
         payload.append(task_payload)
 
 @cache.memoize_function(120)
-@with_app_context
 def get_full_task(task_id):
     task = tasks_service.get_task_with_relations(task_id)
     task_type = tasks_service.get_task_type(task["task_type_id"])
@@ -420,6 +419,31 @@ def add_dependencies_to_payload(payload: list, dependencies, task_type_name: str
             payload.append(dependency_maps_acl_path.as_posix())
             payload.append(f":glob:{dependency_maps_acl_path.as_posix()}/**")
 
+@cache.memoize_function(120)
+def get_entity(id):
+    return entities_service.get_entity_raw(id).serialize(relations=True)
+
+@with_app_context
+def get_full_task_data(task):
+    global entities_cache
+    task = get_full_task(task['id'])
+
+    # entity = entities_service.get_entity(task['entity_id'])
+    entity = get_entity(task['entity_id'])
+
+    task['entity'] = entity
+    dependencies = [get_entity(i) for i in entity['entities_out']]
+    task['dependencies'] = dependencies
+    for i, dependency in enumerate(task['dependencies']):
+        dependency_task = tasks_service.get_tasks_for_asset(dependency['id'])[0]
+        task['dependencies'][i]['task'] = get_full_task(dependency_task['id'])
+        dependency['dependencies'] = [get_entity(i) for i in dependency['entities_out']]
+        for j, dependency_of_dependency in enumerate(dependency['dependencies']):
+            dependency_of_dependency_task = tasks_service.get_tasks_for_asset(dependency_of_dependency['id'])[0]
+            dependency['dependencies'][j]['task'] = get_full_task(dependency_of_dependency_task['id'])
+    return task
+
+
 @with_app_context
 def reset_acl(
         project_id,
@@ -453,10 +477,13 @@ def reset_acl(
                 continue
         all_used_project_task.append(task)
     all_project_task_full = []
-
     with ThreadPoolExecutor() as executor:
-        for task_data in executor.map(get_full_task, all_used_project_task):
+        for task_data in executor.map(get_full_task_data, all_used_project_task):
             all_project_task_full.append(task_data)
+    # print("================================")
+    # for task_data in all_used_project_task:
+    #     print(task_data)
+    #     all_project_task_full.append(get_full_task(task_data))
         
     for task in all_project_task_full:
         acl_paths = []
