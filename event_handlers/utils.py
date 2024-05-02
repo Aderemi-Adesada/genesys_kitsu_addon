@@ -156,6 +156,7 @@ def rename_task_file(new_name, old_name, task, project, payload, entity_type):
         payload.append(task_payload)
 
 @cache.memoize_function(120)
+@with_app_context
 def get_full_task(task_id):
     task = tasks_service.get_task_with_relations(task_id)
     task_type = tasks_service.get_task_type(task["task_type_id"])
