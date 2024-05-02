@@ -457,7 +457,6 @@ def reset_acl(
         for task_data in executor.map(get_full_task, all_used_project_task):
             all_project_task_full.append(task_data)
         
-    all_project_task_full.set_description(f"reseting acl for project {project_name}")
     for task in all_project_task_full:
         acl_paths = []
         task_type_name = task['task_type']['name'].lower()
