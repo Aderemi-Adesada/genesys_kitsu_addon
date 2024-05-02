@@ -419,6 +419,7 @@ def add_dependencies_to_payload(payload: list, dependencies, task_type_name: str
             payload.append(dependency_maps_acl_path.as_posix())
             payload.append(f":glob:{dependency_maps_acl_path.as_posix()}/**")
 
+@with_app_context
 def reset_acl(
         project_id,
         genesys_host,  
