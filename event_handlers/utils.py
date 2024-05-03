@@ -565,7 +565,7 @@ def reset_acl(
 
     json_object = json.dumps(payloads, indent=4)
 
-    with open("sample_2.json", "w") as outfile:
+    with open("/opt/sample_2.json", "w") as outfile:
         outfile.write(json_object)
 
     result = requests.post(url=f"{genesys_host}/refresh/{project_name}", json=payloads)
