@@ -355,9 +355,9 @@ def get_asset_file_path(
         extension: str,
         suffix: str = None,
         ) -> Path:
-    project_name = slugify(project_name)
-    entity_name = slugify(entity_name)
-    entity_type = slugify(entity_type)
+    project_name = slugify(project_name, separator="_")
+    entity_name = slugify(entity_name, separator="_")
+    entity_type = slugify(entity_type, separator="_")
     assets_root = Path(f"{project_name}/lib")
     if suffix:
         asset_path = assets_root / entity_type / f"{entity_name}_{suffix}.{extension}"
@@ -373,16 +373,16 @@ def get_shot_file_path(
     episode_name: str = None,
     suffix: str = None,
     ) -> Path:
-    project_name = slugify(project_name)
-    entity_name = slugify(entity_name)
+    project_name = slugify(project_name, separator="_")
+    entity_name = slugify(entity_name, separator="_")
     shots_root = Path(f"{project_name}/scenes")
     shot_parents = []
     shot_name_parts = []
     if episode_name:
-        episode_name = slugify(episode_name)
+        episode_name = slugify(episode_name, separator="_")
         shot_parents.append(episode_name)
     if sequence_name:
-        sequence_name = slugify(sequence_name)
+        sequence_name = slugify(sequence_name, separator="_")
         shot_parents.append(sequence_name)
         shot_name_parts.append(sequence_name)
     shot_parents.append(entity_name)
@@ -402,7 +402,7 @@ def get_acl_path(project_name: str, file_path: Path) -> Path:
     '''
         get svn repository acl directory
     '''
-    project_name = slugify(project_name)
+    project_name = slugify(project_name, separator="_")
     acl_path = Path(f"{project_name}:",file_path.as_posix().split(f"{project_name}/", 1)[1])
     return acl_path
 
@@ -516,7 +516,7 @@ def reset_acl(
                 sequence_name, episode_name, suffix
                 )
 
-        main_file_name = slugify(entity_name)
+        main_file_name = slugify(entity_name, separator="_")
         production_type = task['project']['production_type']
 
 
