@@ -488,7 +488,7 @@ def reset_acl(
     for task in all_project_task_full:
         acl_paths = []
         task_type_name = task['task_type']['name'].lower()
-        persons = [person['desktop_login'] for person in task['persons']]
+        persons = [person['email'] for person in task['persons']]
         for_entity = task["task_type"]["for_entity"]
         entity_name = task['entity']['name']
 
